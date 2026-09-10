@@ -374,7 +374,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supports RedisTimeSeries commands: TS.MRANGE, TS.RANGE.
 - Provides Redis monitoring dashboard.
 
-[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.3.0...local-modifications
+[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.3.0...main
 [2.3.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.1.2...v2.2.0
