@@ -1,8 +1,6 @@
 module github.com/redisgrafana/grafana-redis-datasource
 
-go 1.26.5
-
-toolchain go1.26.8
+go 1.26.8
 
 require (
 	bitbucket.org/creachadair/shell v0.0.6

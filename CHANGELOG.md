@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Raised the `go` directive in `go.mod` from `1.26.5` to `1.26.8` and dropped the now redundant `toolchain go1.26.8` line, so one version governs both the language floor and the build. A `toolchain` line is honoured by `GOTOOLCHAIN=auto` but ignored by `GOTOOLCHAIN=local`, which is the default in Debian's and Fedora's Go packages, and such a build would have compiled against the 1.26.5 standard library — [GO-2026-6090](https://pkg.go.dev/vuln/GO-2026-6090) in `crypto/tls` and [GO-2026-5972](https://pkg.go.dev/vuln/GO-2026-5972) in `encoding/asn1`. It now fails with `go.mod requires go >= 1.26.8` instead. `go.sum` and every dependency version are unchanged, and `govulncheck` and Trivy still report nothing against the binary
+
 ## [2.3.0] - 2026-09-10
 
 ### Added
