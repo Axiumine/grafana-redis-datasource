@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import {
@@ -25,6 +28,7 @@ const getInstanceSettings = (overrideSettings: object = {}): DataSourceInstanceS
   type: '',
   name: '',
   access: 'direct',
+  readOnly: false,
   meta: {
     id: '',
     name: '',
@@ -117,6 +121,8 @@ describe('DataSource', () => {
     templateSrv = {
       replace: jest.fn().mockImplementation((value) => `replaced:${value}`),
       getVariables: jest.fn(),
+      containsTemplate: jest.fn(),
+      updateTimeRange: jest.fn(),
     };
     setTemplateSrv(templateSrv);
   });

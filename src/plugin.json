@@ -2,8 +2,7 @@
   "alerting": true,
   "backend": true,
   "dependencies": {
-    "grafanaDependency": ">=8.0.0",
-    "grafanaVersion": "8.x.x",
+    "grafanaDependency": ">=12.0.0",
     "plugins": []
   },
   "executable": "redis-datasource",

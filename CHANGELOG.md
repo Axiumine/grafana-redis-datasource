@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added an `aria-label` to the twelve `Select`, `TextArea` and `RadioButtonGroup` controls of the query editor. Every one of them sits beside a bare `InlineFormLabel`, which renders a `<label>` carrying no `htmlFor`, so none of them had an accessible name — neither for a screen reader nor for a test that addresses the rendered document rather than a component's props
+- Added `.nvmrc`, and the three workflows read the Node version from it through `node-version-file` instead of repeating it
+- Added `yarn typecheck`, `yarn lint` and `yarn test:ci` steps to all three workflows, which until now ran `yarn build` and nothing else
+
+### Changed
+
+- Migrated the frontend build from the deprecated `@grafana/toolkit` 8.3.4 to the `@grafana/create-plugin` scaffolding in `.config/`: webpack 5, SWC and Jest 29, configured from the root `jest.config.js`, `jest-setup.js`, `tsconfig.json`, `eslint.config.mjs` and `.prettierrc.js`, each of which only extends its scaffolded counterpart. `.config/` is regenerated wholesale by `create-plugin update` and must not be edited
+- Upgraded `@grafana/data`, `@grafana/runtime` and `@grafana/ui` from 8.3.4 to 12.2.1, and React from 17 to 18. `@grafana/ui` 12 peer-requires React 18, and `DataSourceSettings` no longer carries `password` or `basicAuthPassword`
+- Rewrote the `ConfigEditor` and `QueryEditor` suites from Enzyme to React Testing Library. Enzyme has no React 18 adapter, so the rewrite was a precondition of the upgrade rather than a preference; the suite still holds 229 tests, asserting against the rendered document instead of a shallow render's props
+- Raised `grafanaDependency` in `src/plugin.json` from `>=8.0.0` to `>=12.0.0`. **This drops support for Grafana 8 through 11**: the plugin will no longer install on them
+- The workflows install dependencies unconditionally instead of skipping the step whenever a cache was hit, and `actions/setup-node` now caches the yarn cache directory itself. The previous arrangement let a stale `node_modules` cache keep a job green while the same commit failed from cold
+- Replaced every `::set-output` command, which GitHub has disabled, with an append to `$GITHUB_OUTPUT`
+- Replaced the archived `actions/create-release@v1` and `actions/upload-release-asset@v1` with `softprops/action-gh-release@v2`, and the retired `plugincheck` validator with `plugincheck2`
+- Dropped `NODE_OPTIONS: --openssl-legacy-provider` from the workflows; webpack 5 does not need it
+
+### Removed
+
+- Removed the deprecated `grafanaVersion` key from `src/plugin.json`, superseded by `grafanaDependency`
+- Removed `@grafana/toolkit`, `enzyme`, `enzyme-adapter-react-16`, `@wojtekmaj/enzyme-adapter-react-17`, their `@types` packages and `sinon`
+- Removed `config/jest-setup.ts`, superseded by the root `jest-setup.js`
+
 ### Security
 
 - Raised the `go` directive in `go.mod` from `1.26.5` to `1.26.8` and dropped the now redundant `toolchain go1.26.8` line, so one version governs both the language floor and the build. A `toolchain` line is honoured by `GOTOOLCHAIN=auto` but ignored by `GOTOOLCHAIN=local`, which is the default in Debian's and Fedora's Go packages, and such a build would have compiled against the 1.26.5 standard library — [GO-2026-6090](https://pkg.go.dev/vuln/GO-2026-6090) in `crypto/tls` and [GO-2026-5972](https://pkg.go.dev/vuln/GO-2026-5972) in `encoding/asn1`. It now fails with `go.mod requires go >= 1.26.8` instead. `go.sum` and every dependency version are unchanged, and `govulncheck` and Trivy still report nothing against the binary

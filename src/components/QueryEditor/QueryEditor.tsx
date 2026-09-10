@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 import React, { ChangeEvent, PureComponent } from 'react';
 import { RedisGraph } from 'redis/graph';
 import { css } from '@emotion/css';
@@ -363,6 +366,7 @@ export class QueryEditor extends PureComponent<Props> {
         <div className="gf-form">
           <InlineFormLabel width={8}>Type</InlineFormLabel>
           <Select
+            aria-label="Type"
             className={css`
               margin-right: 5px;
             `}
@@ -376,13 +380,19 @@ export class QueryEditor extends PureComponent<Props> {
           {type === QueryTypeValue.CLI && (
             <>
               <InlineFormLabel width={8}>Command</InlineFormLabel>
-              <TextArea value={query} className="gf-form-input" onChange={this.onQueryChange} />
+              <TextArea aria-label="Command" value={query} className="gf-form-input" onChange={this.onQueryChange} />
             </>
           )}
           {type && type !== QueryTypeValue.CLI && (
             <>
               <InlineFormLabel width={8}>Command</InlineFormLabel>
-              <Select options={Commands[type]} menuPlacement="bottom" value={command} onChange={this.onCommandChange} />
+              <Select
+                aria-label="Command"
+                options={Commands[type]}
+                menuPlacement="bottom"
+                value={command}
+                onChange={this.onCommandChange}
+              />
             </>
           )}
         </div>
@@ -496,7 +506,7 @@ export class QueryEditor extends PureComponent<Props> {
             >
               Cypher
             </InlineFormLabel>
-            <TextArea value={cypher} className="gf-form-input" onChange={this.onCypherChange} />
+            <TextArea aria-label="Cypher" value={cypher} className="gf-form-input" onChange={this.onCypherChange} />
           </div>
         )}
 
@@ -520,7 +530,7 @@ export class QueryEditor extends PureComponent<Props> {
             >
               Path
             </InlineFormLabel>
-            <TextArea value={path} className="gf-form-input" onChange={this.onPathChange} />
+            <TextArea aria-label="Path" value={path} className="gf-form-input" onChange={this.onPathChange} />
           </div>
         )}
 
@@ -529,7 +539,12 @@ export class QueryEditor extends PureComponent<Props> {
             <InlineFormLabel tooltip="The RediSearch Query to issue to the index." width={10}>
               Query
             </InlineFormLabel>
-            <TextArea value={searchQuery} className="gf-form-input" onChange={this.onSearchQueryChange} />
+            <TextArea
+              aria-label="Query"
+              value={searchQuery}
+              className="gf-form-input"
+              onChange={this.onSearchQueryChange}
+            />
           </div>
         )}
 
@@ -590,6 +605,7 @@ export class QueryEditor extends PureComponent<Props> {
           <div className="gf-form">
             <InlineFormLabel width={8}>Sort Direction</InlineFormLabel>
             <Select
+              aria-label="Sort Direction"
               onChange={this.onSortDirectionChange}
               options={SortDirection}
               width={20}
@@ -615,6 +631,7 @@ export class QueryEditor extends PureComponent<Props> {
           <div className="gf-form">
             <InlineFormLabel width={8}>Range Query</InlineFormLabel>
             <Select
+              aria-label="Range Query"
               className={css`
                 margin-right: 5px;
               `}
@@ -690,7 +707,13 @@ export class QueryEditor extends PureComponent<Props> {
         {type === QueryTypeValue.REDIS && command && CommandParameters.section.includes(command as Redis) && (
           <div className="gf-form">
             <InlineFormLabel width={8}>Section</InlineFormLabel>
-            <Select options={InfoSections} onChange={this.onInfoSectionChange} value={section} menuPlacement="bottom" />
+            <Select
+              aria-label="Section"
+              options={InfoSections}
+              onChange={this.onInfoSectionChange}
+              value={section}
+              menuPlacement="bottom"
+            />
           </div>
         )}
 
@@ -700,6 +723,7 @@ export class QueryEditor extends PureComponent<Props> {
             <div className="gf-form">
               <InlineFormLabel width={8}>Aggregation</InlineFormLabel>
               <Select
+                aria-label="Aggregation"
                 className={css`
                   margin-right: 5px;
                 `}
@@ -745,6 +769,7 @@ export class QueryEditor extends PureComponent<Props> {
               />
               {tsGroupByLabel && (
                 <Select
+                  aria-label="Reducer"
                   options={Reducers}
                   width={30}
                   onChange={this.onTsReducerChange}
@@ -793,6 +818,7 @@ export class QueryEditor extends PureComponent<Props> {
               Data type
             </InlineFormLabel>
             <RadioButtonGroup
+              aria-label="Data type"
               options={StreamingDataTypes}
               value={streamingDataType || StreamingDataType.TIMESERIES}
               onChange={this.onStreamingDataTypeChange}
