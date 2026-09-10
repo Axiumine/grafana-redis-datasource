@@ -100,7 +100,15 @@ jobs:
       - name: Read changelog
         id: changelog
         run: |
-          awk '/^## / {s++} s == 1 {print}' CHANGELOG.md > release_notes.md
+          awk -v tag="## [${{ steps.metadata.outputs.plugin-version }}]" '
+            index($0, tag) == 1 { found = 1; print; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            printf "\033[0;31mNo CHANGELOG section for ${{ steps.metadata.outputs.plugin-version }}\033[0m\n"
+            exit 1
+          fi
           echo "path=release_notes.md" >> "$GITHUB_OUTPUT"
 
       - name: Check package version
