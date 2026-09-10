@@ -1,5 +1,23 @@
 # Change Log
 
+## 2.3.0 (2026-09-10)
+
+### Features / Enhancements
+
+- Added the argument count returned by [SLOWLOG GET](https://redis.io/commands/slowlog-get/) in Redis 8.10 as **Arg Count**, plus a **Truncated** flag derived from the `... (N more arguments)` marker
+- Added [HOTKEYS GET](https://redis.io/commands/hotkeys-get/) (Redis 8.6) as a command, returning the tracked keys as a long frame and the collection scalars as a summary frame
+- Added `threads`, `hotkeys`, `modules`, `latencystats`, `keysizes`, `search` and `everything` to the INFO section dropdown, taking it from 11 sections to 18
+- Parsed the record style INFO sections into typed frames instead of raw text: `latencystats` with one column per tracked percentile, `keysizes` as database/type/bucket/count rows, `modules` with version, API level and dependencies, `threads` per I/O thread, `hotkeys` and `search`
+- `INFO all` and `INFO everything` now return one frame per section instead of collapsing every section into a single frame
+- `CLUSTER NODES` keeps every slot range of a node instead of the first one only, splits out the hostname and adds a `Slots` count
+- `CLUSTER INFO` is parsed by the same code path as an INFO section
+
+### Bug fixes
+
+- Streamed replies that carry no time field now get one, so a streaming `INFO` query can be plotted on a time series panel (previously it produced a frame with no time field, which no time series panel could render)
+- `CLUSTER NODES` reported `ping-sent` and `pong-received` as `ms` durations when they are Unix millisecond timestamps, and replaced a `0` ping — no ping pending — with the current time, making every idle node look freshly pinged. They are now ISO timestamps, null when no ping is pending
+- Bundled dashboards referenced the streaming time field as `#time`, which never matched the field name
+
 ## 2.2.1 (2026-08-18)
 
 ### Bug fixes

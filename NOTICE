@@ -1,0 +1,47 @@
+Redis Data Source for Grafana
+=============================
+
+Copyright 2020 Redis Labs
+Copyright 2021-2022 Volkov Labs
+
+This product includes software developed by the RedisGrafana project
+(https://github.com/RedisGrafana/grafana-redis-datasource), licensed under
+the Apache License, Version 2.0.
+
+------------------------------------------------------------------------
+
+Modifications
+-------------
+
+Copyright 2026 Axiumine
+
+This is a fork. The following files were modified or added relative to
+upstream commit 09df07a, and are likewise licensed under the Apache
+License, Version 2.0:
+
+  Modified
+    CHANGELOG.md
+    package.json
+    pkg/models/redis.go
+    pkg/query.go
+    pkg/query_test.go
+    pkg/redis-cluster.go
+    pkg/redis-cluster_test.go
+    pkg/redis-info.go
+    pkg/redis-info_test.go
+    pkg/testing-utilities_test.go
+    src/dashboards/redis-streaming-v8.json
+    src/redis/info.ts
+    src/redis/redis.ts
+    src/time-series/time-series.ts
+    src/time-series/time-series.test.ts
+
+  Added
+    NOTICE
+    pkg/info-parse.go
+    pkg/info-sections.go
+    pkg/info-sections_test.go
+    pkg/redis-hotkeys.go
+    pkg/redis-value.go
+
+See CHANGELOG.md, entry 2.3.0, for what changed and why.

@@ -11,6 +11,23 @@
 [![codecov](https://codecov.io/gh/RedisGrafana/grafana-redis-datasource/branch/master/graph/badge.svg?token=YX7995RPCF)](https://codecov.io/gh/RedisGrafana/grafana-redis-datasource)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/RedisGrafana/grafana-redis-datasource.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/RedisGrafana/grafana-redis-datasource/context:javascript)
 
+> **This is a fork.**
+>
+> Upstream is [RedisGrafana/grafana-redis-datasource](https://github.com/RedisGrafana/grafana-redis-datasource),
+> Apache-2.0, forked at `09df07a` (2.2.1). This fork adds the server data Redis
+> grew between 6.2 and 8.10: the new `INFO` sections as typed frames, `HOTKEYS GET`,
+> the `SLOWLOG GET` argument count, and a time field on streamed replies. It also
+> fixes `CLUSTER NODES` slot and timestamp parsing.
+>
+> See [CHANGELOG.md](CHANGELOG.md) entry **2.3.0** for the full list, and
+> [NOTICE](NOTICE) for attribution. The plugin id is unchanged (`redis-datasource`),
+> so it is a drop-in replacement for the catalogue build.
+>
+> Built for [Axiumine/grafana-redis-dashboard](https://github.com/Axiumine/grafana-redis-dashboard).
+> Everything below this line is upstream's README.
+
+---
+
 ## Introduction
 
 The Redis Data Source for Grafana is a plugin that allows users to connect to any Redis database On-Premises and in the Cloud. It provides out-of-the-box predefined dashboards and lets you build customized dashboards to monitor Redis and application data.
