@@ -26,11 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced every `::set-output` command, which GitHub has disabled, with an append to `$GITHUB_OUTPUT`
 - Replaced the archived `actions/create-release@v1` and `actions/upload-release-asset@v1` with `softprops/action-gh-release@v2`, and the retired `plugincheck` validator with `plugincheck2`
 - Dropped `NODE_OPTIONS: --openssl-legacy-provider` from the workflows; webpack 5 does not need it
-- Raised `engines.node` from `>=14` to `>=22`. The scaffolded webpack configuration, SWC and Jest 29 all target it, and `.nvmrc`, the workflows and the README now name the same version
+- Raised `engines.node` from `>=14` to `>=22`. The scaffolded webpack configuration, SWC and Jest 29 all target it. `.nvmrc` pins 24 and the three workflows read it through `node-version-file`, so `>=22` is the supported floor and 24 is the version every build actually runs on
 - Declared `react`, `react-dom`, `rxjs`, `@emotion/css` and the three `@grafana/*` packages as `dependencies` instead of inheriting them from `@grafana/toolkit` as development dependencies. Webpack lists all of them as externals, so Grafana keeps providing them at runtime and none of them are bundled
 - `yarn build` and `yarn dev` invoke webpack against `.config/webpack/webpack.config.ts` rather than `grafana-toolkit plugin:build` and `plugin:dev`, and `yarn format` runs Prettier 3 over the whole tree with `--list-different`
 - Changed `FieldValuesContainer` from an interface with one optional field to `Record<string, any>`. `Control<T>` is invariant in `T` and `@grafana/ui` declares the `control` prop of `FieldArray` as `Control<FieldValues>`, so a narrower shape made `Form` infer a narrower `T` whose control was no longer assignable
-- Changed the badge and the requirements in `README.md` from Grafana 8 to Grafana 12, and recorded the Node 22 requirement beside it
+- Changed the Grafana badge in `README.md` from 8 to 12, and stated the fork's own requirements, Grafana 12.0+ and Node.js 22+, in the fork banner rather than inside the requirements list below it, which is upstream's and describes upstream's releases
 - The migrated build was verified end to end against Grafana 12.2.0 and Redis 8.10.1: the configuration editor and the query editor render and update the query model, the command dropdown selects, the CLI text area and a streaming query all return data, and the browser console stays clean
 
 ### Removed
@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The Codecov step failed every run in this fork. `codecov/codecov-action@v4` requires a token, `CODECOV_TOKEN` is not set here, and `fail_ci_if_error: true` turned that into a red build after every other step had passed. The step is now `@v5`, and it is skipped unless the token exists
+- The `README.md` banner asserted that everything below it was upstream's README, while two fork-authored bullets sat inside upstream's requirements list — one of them reading _is required for this fork_, which upstream could not have written. Both are now in the banner, and the text below it is byte-identical to upstream's at `09df07a` apart from the demo section, whose removal the banner states
+- Removed the demo section from `README.md`. `demo.volkovlabs.io` redirects to the notice announcing that Volkov Labs has been acquired and has discontinued its Grafana plugins, so all three links led a reader to a closure page rather than to a dashboard
 - The CI badge in `README.md` reported upstream's build rather than this fork's, and the Codecov badge pointed at upstream's project and token. The first now points at this fork's `ci.yml`, the second is gone, and so is the LGTM badge, whose service was retired in 2022 and whose image no longer resolves
 
 ### Security

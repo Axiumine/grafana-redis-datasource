@@ -17,12 +17,21 @@
 > the `SLOWLOG GET` argument count, and a time field on streamed replies. It also
 > fixes `CLUSTER NODES` slot and timestamp parsing.
 >
+> This fork requires **Grafana 12.0+**, and **Node.js 22+** to build the frontend.
+> Continuous integration builds on the version pinned in `.nvmrc`. The requirements
+> listed further down are upstream's, and describe its own 2.X and 1.X releases
+> rather than this fork.
+>
 > See [CHANGELOG.md](CHANGELOG.md) entry **2.3.0** for the full list, and
 > [NOTICE](NOTICE) for attribution. The plugin id is unchanged (`redis-datasource`),
-> so it is a drop-in replacement for the catalogue build.
+> so it is a drop-in replacement for the catalogue build. Bugs in the fork belong in
+> [this repository's issues](https://github.com/Axiumine/grafana-redis-datasource/issues);
+> the links below point at upstream's.
 >
 > Built for [Axiumine/grafana-redis-dashboard](https://github.com/Axiumine/grafana-redis-dashboard).
-> Everything below this line is upstream's README.
+> Everything below this line is upstream's README, with one deletion: the demo
+> section is gone, because Volkov Labs discontinued its Grafana plugins and the
+> site those links pointed at now serves the closure notice instead.
 
 ---
 
@@ -30,19 +39,10 @@
 
 The Redis Data Source for Grafana is a plugin that allows users to connect to any Redis database On-Premises and in the Cloud. It provides out-of-the-box predefined dashboards and lets you build customized dashboards to monitor Redis and application data.
 
-### Demo
-
-Demo is available on [demo.volkovlabs.io](https://demo.volkovlabs.io):
-
-- [Redis Overview dashboard](https://demo.volkovlabs.io/d/TgibHBv7z/redis-overview?orgId=1&refresh=1h)
-- [Projects](https://demo.volkovlabs.io)
-
 ### Requirements
 
-- **Grafana 12.0+** is required for this fork.
 - **Grafana 8.0+** is required for Redis Data Source 2.X.
 - **Grafana 7.1+** is required for Redis Data Source 1.X.
-- **Node.js 22+** is required to build the frontend.
 
 ### Redis Application plugin
 
