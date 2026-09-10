@@ -17,11 +17,14 @@ Copyright 2026 Axiumine
 
 This is a fork. The following files were modified or added relative to
 upstream commit 09df07a, and are likewise licensed under the Apache
-License, Version 2.0:
+License, Version 2.0. Each modified source file carries its own change
+notice at the top, per Apache-2.0 section 4(b):
 
   Modified
     CHANGELOG.md
+    README.md
     package.json
+    src/plugin.json
     pkg/models/redis.go
     pkg/query.go
     pkg/query_test.go

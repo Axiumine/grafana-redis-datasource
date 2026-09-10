@@ -22,19 +22,23 @@
   ],
   "info": {
     "author": {
-      "name": "RedisGrafana",
-      "url": "https://redisgrafana.github.io"
+      "name": "Axiumine",
+      "url": "https://github.com/Axiumine"
     },
     "description": "Allows to connect to any Redis database On-Premises and in the Cloud.",
     "keywords": ["redis", "timeseries", "backend", "plugin"],
     "links": [
       {
         "name": "Website",
-        "url": "https://redisgrafana.github.io"
+        "url": "https://github.com/Axiumine/grafana-redis-datasource"
+      },
+      {
+        "name": "Upstream project",
+        "url": "https://github.com/RedisGrafana/grafana-redis-datasource"
       },
       {
         "name": "License",
-        "url": "https://github.com/RedisGrafana/grafana-redis-datasource/blob/master/LICENSE"
+        "url": "https://github.com/Axiumine/grafana-redis-datasource/blob/local-modifications/LICENSE"
       }
     ],
     "logos": {

@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 import { FieldType } from '@grafana/data';
 import { QueryTypeValue } from '../redis';
 import { TimeSeriesStreaming, TimeFieldName } from './time-series';

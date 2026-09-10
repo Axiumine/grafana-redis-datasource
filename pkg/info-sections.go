@@ -1,3 +1,8 @@
+// Copyright 2026 Axiumine
+//
+// Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+// Licensed under the Apache License, Version 2.0. See LICENSE.
+
 package main
 
 import (

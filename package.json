@@ -1,5 +1,5 @@
 {
-  "author": "RedisGrafana",
+  "author": "Axiumine",
   "description": "Redis Data Source for Grafana",
   "devDependencies": {
     "@grafana/data": "8.3.4",
