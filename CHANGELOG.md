@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `yarn typecheck`, `yarn lint`, `yarn lint:fix` and `yarn test:ci` scripts. `yarn test` now watches only the files a local run has changed, and `yarn test:ci` is the single pass with coverage that the workflows call
 - Added a type check, a lint and a test step to all three workflows, which until now ran `yarn build` and nothing else
 - Added stubs for `IntersectionObserver` and `ResizeObserver` to `jest-setup.js`. jsdom implements neither, and `@grafana/ui` uses the first in the `ScrollContainer` that wraps every `Select` menu, so a test that opened a dropdown threw a `ReferenceError` before them
+- Added a Qodana workflow, `.github/workflows/qodana.yml`, with `qodana-go.yaml` and `qodana-js.yaml` beside it. One Qodana run analyses one linter image, so the Go backend and the TypeScript frontend get a job each, and each uploads its SARIF to GitHub code scanning under its own category. Neither `qodana-go` nor `qodana-js` has a Community edition — the free grant for open source covers only the JVM, Python, .NET, C++ and Android images — so both jobs skip themselves unless a `QODANA_TOKEN` secret is set, the way the Codecov step already does
 - Added the Apache-2.0 section 4(b) change notice to the three workflows, the `Dockerfile` and `.gitignore`, which were modified without one, and the fork notice to `.githooks/commit-msg` and `.github/dependabot.yml`, which are ours
 
 ### Changed

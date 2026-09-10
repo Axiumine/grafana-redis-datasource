@@ -1,0 +1,23 @@
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+version: '1.0'
+
+linter: qodana-js
+
+# The same install the three workflows run, so module resolution matches what
+# CI actually builds against.
+bootstrap: yarn install --frozen-lockfile
+
+profile:
+  name: qodana.recommended
+  inspections:
+    - group: ALL
+      ignore:
+        - 'pkg/**'
+        - 'dist/**'
+        - 'node_modules/**'
+        - 'vendor/**'
+        - '.config/**'

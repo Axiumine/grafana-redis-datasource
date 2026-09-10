@@ -1,0 +1,25 @@
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+version: '1.0'
+
+linter: qodana-go
+
+# Restore the module graph inside the linter container before analysis, so that
+# imports resolve. GOTOOLCHAIN=auto is Go's own default: if the image ships a Go
+# older than the 1.26.8 floor in go.mod, this makes it fetch 1.26.8 rather than
+# analyse against an older standard library.
+bootstrap: GOTOOLCHAIN=auto go mod download
+
+profile:
+  name: qodana.recommended
+  inspections:
+    - group: ALL
+      ignore:
+        - 'src/**'
+        - 'dist/**'
+        - 'node_modules/**'
+        - 'vendor/**'
+        - '.config/**'

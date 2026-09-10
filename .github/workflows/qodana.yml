@@ -1,0 +1,69 @@
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+name: Qodana
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # One Qodana run analyses one linter image, so the Go backend and the
+  # TypeScript frontend need a job each. Neither qodana-go nor qodana-js has a
+  # Community edition, so both jobs skip themselves when QODANA_TOKEN is unset,
+  # the same way the Codecov step in ci.yml skips without CODECOV_TOKEN.
+  backend:
+    runs-on: ubuntu-latest
+
+    env:
+      QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Qodana reads history to attribute problems to commits.
+
+      - name: Scan backend
+        if: env.QODANA_TOKEN != ''
+        uses: JetBrains/qodana-action@v2026.2
+        with:
+          args: --config,qodana-go.yaml
+          primary-cache-key: qodana-go-${{ github.ref }}-${{ github.sha }}
+          additional-cache-key: qodana-go-${{ github.ref }}
+
+      - name: Upload backend results to code scanning
+        if: env.QODANA_TOKEN != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
+          category: qodana-go
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    env:
+      QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan frontend
+        if: env.QODANA_TOKEN != ''
+        uses: JetBrains/qodana-action@v2026.2
+        with:
+          args: --config,qodana-js.yaml
+          primary-cache-key: qodana-js-${{ github.ref }}-${{ github.sha }}
+          additional-cache-key: qodana-js-${{ github.ref }}
+
+      - name: Upload frontend results to code scanning
+        if: env.QODANA_TOKEN != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
+          category: qodana-js
