@@ -1,3 +1,6 @@
+# Modified in 2026 by Axiumine, from the original in
+# RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 name: CI
 
 on: [push, pull_request]
@@ -8,6 +11,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -67,10 +73,10 @@ jobs:
           go run golang.org/x/vuln/cmd/govulncheck@latest ./pkg/...
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        if: env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           directory: ./coverage/
           files: ./coverage/lcov.info,./coverage/backend.txt
-          env_vars: OS,PYTHON
           fail_ci_if_error: true

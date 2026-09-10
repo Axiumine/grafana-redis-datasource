@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `yarn typecheck`, `yarn lint`, `yarn lint:fix` and `yarn test:ci` scripts. `yarn test` now watches only the files a local run has changed, and `yarn test:ci` is the single pass with coverage that the workflows call
 - Added a type check, a lint and a test step to all three workflows, which until now ran `yarn build` and nothing else
 - Added stubs for `IntersectionObserver` and `ResizeObserver` to `jest-setup.js`. jsdom implements neither, and `@grafana/ui` uses the first in the `ScrollContainer` that wraps every `Select` menu, so a test that opened a dropdown threw a `ReferenceError` before them
+- Added the Apache-2.0 section 4(b) change notice to the three workflows, the `Dockerfile` and `.gitignore`, which were modified without one, and the fork notice to `.githooks/commit-msg` and `.github/dependabot.yml`, which are ours
 
 ### Changed
 
@@ -38,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `@grafana/toolkit`, `enzyme`, `enzyme-adapter-react-16`, `@wojtekmaj/enzyme-adapter-react-17`, their `@types` packages and `sinon`
 - Removed `config/jest-setup.ts`, superseded by the root `jest-setup.js`
 - Removed the `yarn upgrade` and `yarn watch` scripts. `yarn dev` is the watching build, and pinned versions are not upgraded wholesale by a script
+
+### Fixed
+
+- The Codecov step failed every run in this fork. `codecov/codecov-action@v4` requires a token, `CODECOV_TOKEN` is not set here, and `fail_ci_if_error: true` turned that into a red build after every other step had passed. The step is now `@v5`, and it is skipped unless the token exists
+- The CI badge in `README.md` reported upstream's build rather than this fork's, and the Codecov badge pointed at upstream's project and token. The first now points at this fork's `ci.yml`, the second is gone, and so is the LGTM badge, whose service was retired in 2022 and whose image no longer resolves
 
 ### Security
 
