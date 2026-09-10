@@ -37,7 +37,7 @@
       },
       {
         "name": "License",
-        "url": "https://github.com/Axiumine/grafana-redis-datasource/blob/local-modifications/LICENSE"
+        "url": "https://github.com/Axiumine/grafana-redis-datasource/blob/main/LICENSE"
       }
     ],
     "logos": {
