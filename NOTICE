@@ -23,8 +23,15 @@ notice at the top, per Apache-2.0 section 4(b):
   Modified
     CHANGELOG.md
     README.md
+    Dockerfile
+    go.mod
+    go.sum
     package.json
     src/plugin.json
+    .github/workflows/ci.yml
+    .github/workflows/main.yml
+    .github/workflows/integration.yml
+    pkg/datasource.go
     pkg/models/redis.go
     pkg/query.go
     pkg/query_test.go
@@ -32,6 +39,7 @@ notice at the top, per Apache-2.0 section 4(b):
     pkg/redis-cluster_test.go
     pkg/redis-info.go
     pkg/redis-info_test.go
+    pkg/redis-time-series.go
     pkg/testing-utilities_test.go
     src/dashboards/redis-streaming-v8.json
     src/redis/info.ts
@@ -41,6 +49,7 @@ notice at the top, per Apache-2.0 section 4(b):
 
   Added
     NOTICE
+    .github/dependabot.yml
     pkg/info-parse.go
     pkg/info-sections.go
     pkg/info-sections_test.go

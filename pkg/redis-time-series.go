@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -125,7 +128,7 @@ func queryTsMRange(from int64, to int64, qm queryModel, client redisClient) back
 	// Check results
 	switch result := result.(type) {
 	case string:
-		response.Error = fmt.Errorf(result)
+		response.Error = fmt.Errorf("%s", result)
 		return response
 	default:
 	}
@@ -383,7 +386,7 @@ func queryTsMGet(qm queryModel, client redisClient) backend.DataResponse {
 	// Check results
 	switch result := result.(type) {
 	case string:
-		response.Error = fmt.Errorf(result)
+		response.Error = fmt.Errorf("%s", result)
 		return response
 	default:
 	}

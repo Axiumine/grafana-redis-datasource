@@ -12,6 +12,14 @@
 - `CLUSTER NODES` keeps every slot range of a node instead of the first one only, splits out the hostname and adds a `Slots` count
 - `CLUSTER INFO` is parsed by the same code path as an INFO section
 
+### Security
+
+- Upgraded `github.com/grafana/grafana-plugin-sdk-go` from `v0.164.0` to `v0.296.4` and the Go toolchain from `1.19` to `1.26.8`, closing every vulnerability reported against the shipped backend binary in [RedisGrafana/grafana-redis-datasource#318](https://github.com/RedisGrafana/grafana-redis-datasource/issues/318). Trivy on `dist/redis-datasource_linux_amd64` goes from 57 findings (2 critical, 34 high, 19 medium, 1 low) to 0; `govulncheck` reports no vulnerabilities in both source and binary mode
+- The SDK bump carries `golang.org/x/net` `v0.9.0` to `v0.58.0`, `google.golang.org/protobuf` `v1.30.0` to `v1.36.12`, `golang.org/x/text` `v0.9.0` to `v0.31.0`, `otelgrpc` `v0.40.0` to `v0.70.0` and `otelhttptrace` `v0.37.0` to `v0.70.0`
+- Pinned `google.golang.org/grpc` to `v1.83.2`, one patch above what the SDK requires, for CVE-2026-84303, CVE-2026-84304 and CVE-2026-84445. `govulncheck` finds none of the three reachable, but a version-based scanner such as Trivy flags them regardless
+- The Go toolchain is pinned in `go.mod` (`toolchain go1.26.8`) rather than in the workflows, because the standard library is attributed to whichever toolchain compiled the binary. The three GitHub workflows and the `Dockerfile` follow from it: `actions/setup-go` now reads `go-version-file: go.mod`, so `go.mod` is the single place a version is declared
+- Added a `govulncheck` step to CI and a `dependabot.yml` covering Go modules, npm, GitHub Actions and Docker, so the next advisory does not need a fork to be noticed
+
 ### Bug fixes
 
 - Streamed replies that carry no time field now get one, so a streaming `INFO` query can be plotted on a time series panel (previously it produced a frame with no time field, which no time series panel could render)

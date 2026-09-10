@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -181,7 +184,7 @@ func (ds *redisDatasource) getInstance(ctx context.Context, pluginContext backen
  *
  * @see https://github.com/mediocregopher/radix
  */
-func newDataSourceInstance(setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func newDataSourceInstance(_ context.Context, setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	// Parse configuration provided by grafana and create configuration for redisClient
 	config, err := createRedisClientConfig(setting)
 	if err != nil {
