@@ -194,9 +194,8 @@ log line to look for is "Plugin signature valid"; the file raises the signature
 logger to debug so both outcomes are visible.
 
 The datasource provisioned from `provisioning/datasources/redis.yaml` points at
-`redis://host.docker.internal:6379`, which Docker Desktop resolves and a Linux
-host does not. On Linux, add a datasource against the Compose Redis at
-`redis://redis:6379` instead.
+`redis://redis:6379`, the Redis service of whichever Compose file mounted that
+directory, so it works the same on every host.
 
 ## Installing into a Grafana that is not Compose
 

@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 import { ReducerValue, ZRangeQueryValue } from 'redis';
 import { DataQuery } from '@grafana/data';
 import { StreamingDataType } from '../constants';
@@ -63,7 +66,7 @@ export interface RedisQuery extends DataQuery {
   /**
    * Redis TimeSeries filter
    *
-   * @see https://oss.redislabs.com/redistimeseries/commands/#filtering
+   * @see https://redis.io/docs/latest/commands/ts.mrange/
    * @type {string}
    */
   filter?: string;
@@ -92,7 +95,7 @@ export interface RedisQuery extends DataQuery {
   /**
    * Aggregation
    *
-   * @see https://oss.redislabs.com/redistimeseries/commands/#aggregation-compaction-downsampling
+   * @see https://redis.io/docs/latest/commands/ts.range/
    * @type {AggregationValue}
    */
   aggregation?: AggregationValue;

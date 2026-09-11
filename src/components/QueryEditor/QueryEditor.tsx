@@ -425,7 +425,7 @@ export class QueryEditor extends PureComponent<Props> {
                 label="Label Filter"
                 tooltip="Whenever filters need to be provided, a minimum of one l=v filter must be applied.
                 The list of possible filters:
-                https://oss.redislabs.com/redistimeseries/commands/#filtering"
+                https://redis.io/docs/latest/commands/ts.mrange/"
               />
             )}
 
@@ -507,7 +507,7 @@ export class QueryEditor extends PureComponent<Props> {
           <div className="gf-form">
             <InlineFormLabel
               tooltip="The syntax is based on Cypher, and only a subset of the language currently supported: \
-                https://oss.redislabs.com/redisgraph/commands/#query-language"
+                https://github.com/RedisGraph/RedisGraph"
               width={8}
             >
               Cypher

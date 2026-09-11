@@ -39,6 +39,7 @@ notice at the top, per Apache-2.0 section 4(b):
     provisioning/datasources/redis.yaml
     provisioning/dashboards/data-types.json
     src/plugin.json
+    src/redis/types.ts
     src/dashboards/redis.json
     .github/workflows/ci.yml
     .github/workflows/main.yml
