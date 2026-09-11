@@ -15,10 +15,13 @@
 # tags v1.0.0 to v2.2.1 point at upstream's own commits and are never packaged
 # here: publishing them would ship upstream's build under our name.
 #
-# Signing needs GRAFANA_ACCESS_POLICY_TOKEN. The script reads it from the
-# untracked .env and never prints it. Without it the build still runs and the
-# artifact is produced unsigned, which Grafana 12 refuses to load unless
-# allow_loading_unsigned_plugins names the plugin.
+# Signing needs two values, both read from the untracked .env and never printed:
+# GRAFANA_ACCESS_POLICY_TOKEN, and GRAFANA_PLUGIN_ROOT_URLS. The second is
+# required because this fork is not in Grafana's catalogue, so the policy issues
+# a private signature, which is bound to the Grafana instances allowed to load
+# the plugin. Signing is mandatory unless ALLOW_UNSIGNED=1 is passed, which
+# produces an artifact Grafana 12 loads only when allow_loading_unsigned_plugins
+# names it — useful for local testing, never for a release.
 #
 # Nothing is pushed and no release is created. The artifacts land in artifacts/,
 # which is gitignored, for local testing.
@@ -32,6 +35,7 @@ export PATH="/usr/local/go/bin:$HOME/go/bin:$PATH"
 
 OUT_DIR="$REPO_ROOT/artifacts"
 WORK_ROOT="${TMPDIR:-/tmp}/package-tag.$$"
+trap 'rm -rf "$WORK_ROOT"' EXIT
 
 if [ -f .env ]; then
   set -a
@@ -132,17 +136,31 @@ package_tag() {
     mage -v buildAll
 
     say "Signing"
-    if [ -n "${GRAFANA_ACCESS_POLICY_TOKEN:-}" ]; then
+    if [ "${ALLOW_UNSIGNED:-0}" = "1" ]; then
+      echo "ALLOW_UNSIGNED=1 — producing an UNSIGNED artifact on purpose."
+      echo "Grafana 12 refuses to load it unless grafana.ini sets:"
+      echo "  allow_loading_unsigned_plugins = redis-datasource"
+    else
+      [ -n "${GRAFANA_ACCESS_POLICY_TOKEN:-}" ] || die "GRAFANA_ACCESS_POLICY_TOKEN is not set.
+  Put it in .env, or pass ALLOW_UNSIGNED=1 to build an unsigned artifact."
+
+      # This fork is not in Grafana's catalogue, so the access policy issues a
+      # private signature, and a private signature names the Grafana instances
+      # the plugin may run on. Without them the signing API answers
+      # 409 InvalidArgument "Field is required: rootUrls". They must match the
+      # root_url in each instance's grafana.ini, trailing slash included.
+      [ -n "${GRAFANA_PLUGIN_ROOT_URLS:-}" ] || die "GRAFANA_PLUGIN_ROOT_URLS is not set.
+  A private signature is bound to the Grafana instances that may load the
+  plugin. Add to .env, comma-separated, matching each instance's root_url:
+      GRAFANA_PLUGIN_ROOT_URLS=\"https://grafana.example.com/\"
+  Or pass ALLOW_UNSIGNED=1 to build an unsigned artifact for local testing."
+
       # Signing runs on current Node regardless of the tag's own era: the
       # signer only reads dist/, so it is not bound to the build toolchain.
       use_node 24
-      npx --yes @grafana/sign-plugin@latest
+      npx --yes @grafana/sign-plugin@latest --rootUrls "$GRAFANA_PLUGIN_ROOT_URLS"
       [ -f dist/MANIFEST.txt ] || die "Signing reported success but wrote no dist/MANIFEST.txt."
       say "Signed: dist/MANIFEST.txt present"
-    else
-      echo "GRAFANA_ACCESS_POLICY_TOKEN is not set — producing an UNSIGNED artifact."
-      echo "Grafana 12 will refuse to load it unless grafana.ini sets:"
-      echo "  allow_loading_unsigned_plugins = redis-datasource"
     fi
 
     say "Packaging"
