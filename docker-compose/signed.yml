@@ -26,10 +26,11 @@
 version: '3.4'
 
 services:
+  # No host port for Redis. Grafana reaches it over the compose network on the
+  # default 6379, and publishing it as well only collides with whatever else on
+  # the machine already holds that port.
   redis:
     image: redis/redis-stack-server:latest
-    ports:
-      - '6379:6379'
 
   grafana:
     container_name: grafana
