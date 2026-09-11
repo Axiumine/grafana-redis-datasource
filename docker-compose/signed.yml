@@ -1,0 +1,51 @@
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+# Starts Grafana against a signed release artifact rather than against dist/,
+# and deliberately does not set GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS. That
+# omission is the point: it is what makes this file a test of the signature
+# instead of a test of the build.
+#
+# A signature whose rootUrls do not match root_url is not treated as unsigned —
+# Grafana marks it SignatureStatusInvalid, and the allow_loading_unsigned_plugins
+# escape hatch covers only SignatureStatusUnsigned. The plugin is dropped from
+# the loader either way, so a mismatch cannot be waved through here.
+#
+# Unpack the artifact first; the zip's top-level directory is already the plugin
+# id, so the extracted tree lands where this file expects it:
+#
+#   unzip -o artifacts/axiumine-redis-datasource-3.0.0.zip -d artifacts/extracted
+#   yarn start:signed
+#
+# The Grafana log line to look for is "Plugin signature valid". "Could not find
+# root URL that matches running application URL" means the signature was issued
+# for a different root_url than the one below.
+
+version: '3.4'
+
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    ports:
+      - '6379:6379'
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    ports:
+      - '3854:3000'
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_ENABLE_GZIP=true
+      - GF_USERS_DEFAULT_THEME=light
+      # This must be one of the URLs the artifact was signed for, character for
+      # character: Grafana compares scheme, host, port and path exactly.
+      - GF_SERVER_ROOT_URL=http://localhost:3854/
+      - GF_LOG_FILTERS=plugin.signature:debug
+    volumes:
+      - ../artifacts/extracted/axiumine-redis-datasource:/var/lib/grafana/plugins/axiumine-redis-datasource:ro
+      - ../provisioning:/etc/grafana/provisioning

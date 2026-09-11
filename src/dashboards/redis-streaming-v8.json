@@ -9,7 +9,7 @@
     },
     {
       "type": "datasource",
-      "id": "redis-datasource",
+      "id": "axiumine-redis-datasource",
       "name": "Redis",
       "version": "2.0.0"
     },
@@ -918,7 +918,7 @@
         "multi": false,
         "name": "redis",
         "options": [],
-        "query": "redis-datasource",
+        "query": "axiumine-redis-datasource",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

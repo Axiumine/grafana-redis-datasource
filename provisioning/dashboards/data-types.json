@@ -1490,7 +1490,7 @@
     },
     {
       "datasource": {
-        "type": "redis-datasource",
+        "type": "axiumine-redis-datasource",
         "uid": "PA7F6415749A3297A"
       },
       "fieldConfig": {
@@ -1567,7 +1567,7 @@
     },
     {
       "datasource": {
-        "type": "redis-datasource",
+        "type": "axiumine-redis-datasource",
         "uid": "${redis}"
       },
       "fieldConfig": {
@@ -1642,7 +1642,7 @@
         {
           "command": "rg.pyexecute",
           "datasource": {
-            "type": "redis-datasource",
+            "type": "axiumine-redis-datasource",
             "uid": "${redis}"
           },
           "field": "",
@@ -4617,7 +4617,7 @@
         "multi": false,
         "name": "redis",
         "options": [],
-        "query": "redis-datasource",
+        "query": "axiumine-redis-datasource",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

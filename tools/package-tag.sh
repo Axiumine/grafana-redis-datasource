@@ -140,6 +140,16 @@ package_tag() {
     die "$tag builds package.json version $version; they must match."
   fi
 
+  # The plugin id is read from the tag's own tree rather than hardcoded. It is
+  # the name Grafana registers the plugin under, the directory it expects under
+  # its plugins path, and the stem of the artifact — and it differs between
+  # tags: v2.3.0 still carries upstream's `redis-datasource`, while 3.0.0
+  # onwards carries `axiumine-redis-datasource`. Reading it keeps both
+  # packageable from one script.
+  local plugin_id
+  plugin_id=$(node -p "require('$work/src/plugin.json').id")
+  [ -n "$plugin_id" ] || { cleanup_worktree; die "$tag has no id in src/plugin.json."; }
+
   local node_version
   if [ -d "$work/.config" ]; then
     node_version=$(cat "$work/.nvmrc" 2>/dev/null || echo 24)
@@ -162,7 +172,7 @@ package_tag() {
     if [ "${ALLOW_UNSIGNED:-0}" = "1" ]; then
       echo "ALLOW_UNSIGNED=1 — producing an UNSIGNED artifact on purpose."
       echo "Grafana 12 refuses to load it unless grafana.ini sets:"
-      echo "  allow_loading_unsigned_plugins = redis-datasource"
+      echo "  allow_loading_unsigned_plugins = $plugin_id"
     else
       # Signing runs on current Node regardless of the tag's own era: the
       # signer only reads dist/, so it is not bound to the build toolchain.
@@ -173,16 +183,16 @@ package_tag() {
     fi
 
     say "Packaging"
-    mv dist redis-datasource
-    make_zip "redis-datasource-$version.zip" redis-datasource
-    md5sum "redis-datasource-$version.zip" > "redis-datasource-$version.zip.md5"
+    mv dist "$plugin_id"
+    make_zip "$plugin_id-$version.zip" "$plugin_id"
+    md5sum "$plugin_id-$version.zip" > "$plugin_id-$version.zip.md5"
 
     mkdir -p "$OUT_DIR"
-    mv "redis-datasource-$version.zip" "redis-datasource-$version.zip.md5" "$OUT_DIR/"
+    mv "$plugin_id-$version.zip" "$plugin_id-$version.zip.md5" "$OUT_DIR/"
   ) || { cleanup_worktree; die "Build failed for $tag."; }
 
   cleanup_worktree
-  ls -l "$OUT_DIR/redis-datasource-$version.zip" "$OUT_DIR/redis-datasource-$version.zip.md5"
+  ls -l "$OUT_DIR/$plugin_id-$version.zip" "$OUT_DIR/$plugin_id-$version.zip.md5"
 }
 
 TAGS=("$@")

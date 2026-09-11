@@ -22,11 +22,16 @@
 > listed further down are upstream's, and describe its own 2.X and 1.X releases
 > rather than this fork.
 >
-> See [CHANGELOG.md](CHANGELOG.md) entry **2.3.0** for the full list, and
-> [NOTICE](NOTICE) for attribution. The plugin id is unchanged (`redis-datasource`),
-> so it is a drop-in replacement for the catalogue build. Bugs in the fork belong in
+> See [CHANGELOG.md](CHANGELOG.md) entries **2.3.0** and **3.0.0** for the full list,
+> and [NOTICE](NOTICE) for attribution. The plugin id is `axiumine-redis-datasource`
+> as of 3.0.0; up to 2.3.0 it was upstream's `redis-datasource`, and installing this
+> build no longer replaces the catalogue one in place. Grafana ties both signing and
+> catalogue publication to an id whose first segment is the publishing organisation,
+> so a fork that wants a signature anybody can install has to carry its own id.
+> Dashboards and provisioning name the plugin by that id, in `type` and in schema v2's
+> `group`, and have to be updated with it. Bugs in the fork belong in
 > [this repository's issues](https://github.com/Axiumine/grafana-redis-datasource/issues);
-> the links below point at upstream's.
+> the links below point at upstream's, and describe upstream's catalogue build.
 >
 > Built for [Axiumine/grafana-redis-dashboard](https://github.com/Axiumine/grafana-redis-dashboard).
 > Everything below this line is upstream's README, with one deletion: the demo

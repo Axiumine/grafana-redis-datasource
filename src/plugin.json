@@ -5,8 +5,8 @@
     "grafanaDependency": ">=12.0.0",
     "plugins": []
   },
-  "executable": "redis-datasource",
-  "id": "redis-datasource",
+  "executable": "axiumine-redis-datasource",
+  "id": "axiumine-redis-datasource",
   "includes": [
     {
       "name": "Redis Overview",

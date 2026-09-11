@@ -1,3 +1,6 @@
+# Modified in 2026 by Axiumine, from the original in
+# RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 version: '3.4'
 
 services:
@@ -12,18 +15,21 @@ services:
     container_name: grafana
     image: grafana/grafana:master
     ports:
-      - '3000:3000'
+      - '3854:3000'
     environment:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_BASIC_ENABLED=false
       - GF_ENABLE_GZIP=true
       - GF_USERS_DEFAULT_THEME=light
-      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=redis-datasource
+      # Grafana compares a plugin signature's rootUrls against this value, not against
+      # the address in the browser, so the published port has to be named here.
+      - GF_SERVER_ROOT_URL=http://localhost:3854/
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=axiumine-redis-datasource
       # Uncomment to run in debug mode
       # - GF_LOG_LEVEL=debug
     volumes:
-      - ../dist:/var/lib/grafana/plugins/redis-datasource
+      - ../dist:/var/lib/grafana/plugins/axiumine-redis-datasource
       - ../provisioning:/etc/grafana/provisioning
       # Uncomment to preserve Grafana configuration
       # - ./data:/var/lib/grafana
