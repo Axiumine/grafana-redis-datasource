@@ -122,4 +122,39 @@ describe('TimeSeriesStreaming', () => {
     expect(fieldByName(data, TimeFieldName)).toBeUndefined();
     expect(fieldByName(data, 'Timestamp').values.toArray()).toEqual([1789052949000]);
   });
+  it('Should hand out a detached copy rather than the circular buffer', async () => {
+    const streaming = new TimeSeriesStreaming({ refId: 'A', type: QueryTypeValue.REDIS });
+    const data = await streaming.update([
+      {
+        name: 'used_memory',
+        type: FieldType.number,
+        values: { toArray: jest.fn().mockImplementation(() => [4686704]) },
+      },
+    ]);
+
+    /**
+     * Grafana 13 releases the buffers of frames it has stopped rendering by
+     * assigning values.length = 0, which a CircularVector rejects. Nothing
+     * outside this class may be handed one.
+     */
+    expect(data).not.toBe(streaming.frame);
+    data.fields.forEach((field) => {
+      expect(Array.isArray(field.values)).toBeTruthy();
+      expect(() => {
+        field.values.length = 0;
+      }).not.toThrow();
+    });
+
+    /**
+     * Zeroing the copy leaves the buffer it was taken from intact
+     */
+    const next = await streaming.update([
+      {
+        name: 'used_memory',
+        type: FieldType.number,
+        values: { toArray: jest.fn().mockImplementation(() => [4686800]) },
+      },
+    ]);
+    expect(fieldByName(next, 'used_memory').values).toEqual([4686704, 4686800]);
+  });
 });

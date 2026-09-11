@@ -7,6 +7,7 @@ import {
   CircularDataFrame,
   DataQueryRequest,
   DataSourceInstanceSettings,
+  Field,
   FieldType,
   MetricFindValue,
   PluginType,
@@ -16,6 +17,7 @@ import { DataSourceWithBackend, setTemplateSrv, TemplateSrv } from '@grafana/run
 import { ClientTypeValue, StreamingDataType } from '../constants';
 import { QueryTypeValue, RedisQuery } from '../redis';
 import { getQuery } from '../tests/utils';
+import { TimeFieldName } from '../time-series';
 import { RedisDataSourceOptions } from '../types';
 import { DataSource } from './datasource';
 
@@ -170,7 +172,16 @@ describe('DataSource', () => {
         .subscribe(
           (value) => {
             value.data.forEach((item) => {
-              expect(item).toBeInstanceOf(CircularDataFrame);
+              /**
+               * TimeSeriesStreaming hands out a detached copy of its circular
+               * buffer rather than the buffer itself, so the frame that reaches
+               * a panel is an ordinary one whose fields own ordinary arrays.
+               */
+              expect(item).not.toBeInstanceOf(CircularDataFrame);
+              expect(item.fields.some((field: Field) => field.name === TimeFieldName)).toBeTruthy();
+              item.fields.forEach((field: Field) => {
+                expect(Array.isArray(field.values)).toBeTruthy();
+              });
             });
           },
           null,

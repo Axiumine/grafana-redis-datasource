@@ -1,7 +1,7 @@
 // Modified in 2026 by Axiumine, from the original in
 // RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
 
-import { CircularDataFrame, Field, FieldType } from '@grafana/data';
+import { CircularDataFrame, DataFrame, Field, FieldType } from '@grafana/data';
 import { DefaultStreamingCapacity } from '../constants';
 import { RedisQuery } from '../redis';
 
@@ -43,9 +43,9 @@ export class TimeSeriesStreaming {
    * Add new values for the frame
    *
    * @param {any} fields Fields of the frame the reply produced
-   * @returns {Promise<CircularDataFrame>} The updated circular frame
+   * @returns {Promise<DataFrame>} A detached snapshot of the updated circular frame
    */
-  async update(fields: any): Promise<CircularDataFrame> {
+  async update(fields: any): Promise<DataFrame> {
     let values: { [index: string]: number } = {};
 
     /**
@@ -89,6 +89,34 @@ export class TimeSeriesStreaming {
      * Add values and return
      */
     this.frame.add(values);
-    return Promise.resolve(this.frame);
+    return Promise.resolve(this.snapshot());
+  }
+
+  /**
+   * Copy the buffer into an ordinary frame backed by ordinary arrays
+   *
+   * Grafana 13 releases the buffers of frames it has stopped rendering by
+   * assigning `values.length = 0`. It exempts streaming frames, which it
+   * recognises by the `appendRow` method a CircularDataFrame carries, but a
+   * panel transformation rebuilds the frame as a plain object and that
+   * recognition is lost while the fields still point at the same buffers. The
+   * buffers are CircularVector proxies whose `length` is read-only, so the
+   * assignment throws and the exception escapes into React, taking the whole
+   * dashboard down with it. Handing out a copy keeps the proxies private to
+   * this class, so nothing outside it can be asked to release them.
+   *
+   * @returns {DataFrame} A frame whose fields own plain arrays
+   */
+  private snapshot(): DataFrame {
+    return {
+      name: this.frame.name,
+      refId: this.frame.refId,
+      meta: this.frame.meta,
+      fields: this.frame.fields.map((field) => ({
+        ...field,
+        values: Array.from<any>(field.values as any),
+      })),
+      length: this.frame.length,
+    };
   }
 }
