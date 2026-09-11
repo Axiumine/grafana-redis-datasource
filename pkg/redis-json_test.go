@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -354,5 +357,65 @@ func TestQueryJsonGet(t *testing.T) {
 		resp := queryJsonGet(queryModel{Command: models.JsonGet, Key: "test:json", Path: "."}, &client)
 		require.Len(t, resp.Frames, 0)
 		require.EqualError(t, resp.Error, "some error")
+	})
+}
+
+/**
+ * JSON.GET values that no field type can hold
+ */
+func TestQueryJsonGetUnsupportedTypes(t *testing.T) {
+	t.Parallel()
+
+	// A value the frame cannot type is logged and skipped, leaving the rest of
+	// the document intact. Returning an error instead would make one awkward
+	// member of an object hide every other member of it.
+	t.Run("should skip an object member that is an array", func(t *testing.T) {
+		t.Parallel()
+
+		client := testClient{rcv: `{"name":"redis","ports":[6379,16379]}`}
+		response := queryJsonGet(queryModel{Command: models.JsonGet, Key: "test:json", Path: "."}, &client)
+
+		require.NoError(t, response.Error)
+		require.Len(t, response.Frames[0].Fields, 1)
+		require.Equal(t, "name", response.Frames[0].Fields[0].Name)
+	})
+
+	t.Run("should skip a document that is a bare number", func(t *testing.T) {
+		t.Parallel()
+
+		client := testClient{rcv: "3.14"}
+		response := queryJsonGet(queryModel{Command: models.JsonGet, Key: "test:json", Path: "."}, &client)
+
+		require.NoError(t, response.Error)
+		require.Empty(t, response.Frames[0].Fields)
+	})
+
+	t.Run("should skip an entry member that is an array", func(t *testing.T) {
+		t.Parallel()
+
+		client := testClient{rcv: `[{"name":"first","ports":[6379]}]`}
+		response := queryJsonGet(queryModel{Command: models.JsonGet, Key: "test:json", Path: "."}, &client)
+
+		require.NoError(t, response.Error)
+		require.Len(t, response.Frames[0].Fields, 1)
+		require.Equal(t, "name", response.Frames[0].Fields[0].Name)
+	})
+
+	// A nested object joins into one text cell, and the rows that preceded its
+	// first appearance are back-filled so every column stays the same length.
+	t.Run("should back-fill a nested object appearing on a later row", func(t *testing.T) {
+		t.Parallel()
+
+		client := testClient{rcv: `[{"name":"first"},{"name":"second","labels":{"a":{"b":"one"}}}]`}
+		response := queryJsonGet(queryModel{Command: models.JsonGet, Key: "test:json", Path: "."}, &client)
+
+		require.NoError(t, response.Error)
+		require.Len(t, response.Frames[0].Fields, 2)
+
+		labels := response.Frames[0].Fields[1]
+		require.Equal(t, "labels", labels.Name)
+		require.Equal(t, 2, labels.Len())
+		require.Equal(t, "", labels.At(0))
+		require.Equal(t, "one", labels.At(1))
 	})
 }

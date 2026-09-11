@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -353,4 +356,20 @@ func TestQueryCustomCommand(t *testing.T) {
 			}
 		})
 	}
+}
+
+/**
+ * Custom command returning an array with an element of an unsupported type
+ */
+func TestQueryCustomCommandUnsupportedArrayElement(t *testing.T) {
+	t.Parallel()
+
+	// The parse error has to end the response rather than fall through to a
+	// frame: a partially parsed array would render as a short list with no
+	// indication that anything was dropped.
+	client := testClient{rcv: []interface{}{[]byte("first"), 3.14}}
+	response := queryCustomCommand(queryModel{Command: "customCommand", Query: "COMMAND DOCS"}, &client)
+
+	require.EqualError(t, response.Error, "unsupported array return type")
+	require.Nil(t, response.Frames)
 }

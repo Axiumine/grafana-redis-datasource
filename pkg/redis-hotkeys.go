@@ -27,7 +27,7 @@ import (
  *
  * @see https://redis.io/commands/hotkeys-get
  */
-func queryHotkeysGet(qm queryModel, client redisClient) backend.DataResponse {
+func queryHotkeysGet(_ queryModel, client redisClient) backend.DataResponse {
 	response := backend.DataResponse{}
 
 	// Execute command
@@ -55,7 +55,7 @@ func queryHotkeysGet(qm queryModel, client redisClient) backend.DataResponse {
 	summary := data.NewFrame("summary")
 
 	// Key -> metric -> value, keeping the order keys were first seen in
-	order := []string{}
+	var order []string
 	metrics := map[string]map[string]int64{}
 
 	collect := func(metric string, values []interface{}) {

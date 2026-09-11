@@ -27,10 +27,37 @@ exclude:
     paths:
       - pkg
       - dist
+      - .qodana
       - node_modules
       - vendor
       - .config
       - coverage
+
+  # Every relative import in src is reported as shortenable, because the scaffolded
+  # .config/tsconfig.json maps `"*": ["../src/*"]` and a bare specifier is therefore
+  # always shorter. Taking that advice would make the whole frontend depend on a path
+  # mapping inside a file `create-plugin update` regenerates and CLAUDE.md forbids
+  # editing, and the tree is relative throughout — roughly fifty relative imports
+  # against three bare ones. Relative paths resolve without any mapping at all, so
+  # they stay.
+  - name: ES6PreferShortImport
+    paths:
+      - src
+
+  # The deprecations are Grafana's own: LegacyForms, Form and FieldArray in
+  # @grafana/ui, DataQuery's move to @grafana/schema, and Field.values.toArray. Moving
+  # off them is a rewrite of both editors and of the streaming frame, which is its own
+  # release rather than a side effect of a lint run. Removing this exclusion is how
+  # that work gets found again.
+  - name: JSDeprecatedSymbols
+    paths:
+      - src
+
+  # Duplicated code here is the test data of the configuration editor's table-driven
+  # cases, the same judgement qodana-go.yaml records for the backend suites.
+  - name: DuplicatedCode
+    paths:
+      - src
 
 # Ultimate Plus. analyzeDevDependencies widens the vulnerability checker and the
 # licence audit to devDependencies, which for a plugin is most of the tree: the
@@ -39,9 +66,18 @@ raiseLicenseProblems: true
 enablePackageSearch: true
 analyzeDevDependencies: true
 
+# CC0-1.0 is a public-domain dedication and CC-BY-4.0 asks only for attribution,
+# so neither constrains an Apache-2.0 redistribution; both reach the tree through
+# build-time data packages — caniuse-lite's browser table, mdn-data, spdx-license-ids,
+# string-hash and xml-utils — and none of them is bundled into dist. Listing them is
+# what the audit wants: it reports any licence it finds in neither list, so an
+# unreviewed one still fails the run.
 licenseRules:
   - keys:
       - Apache-2.0
+    allowed:
+      - CC0-1.0
+      - CC-BY-4.0
     prohibited:
       - GPL-2.0
       - GPL-3.0

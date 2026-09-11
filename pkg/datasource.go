@@ -34,9 +34,7 @@ func newDatasource() datasource.ServeOpts {
 	}
 }
 
-/**
-* Find element in the slice
- */
+// Find element in the slice
 func Find(slice []string, val string) (int, bool) {
 	for i, item := range slice {
 		if item == val {
@@ -46,11 +44,9 @@ func Find(slice []string, val string) (int, bool) {
 	return -1, false
 }
 
-/**
- * QueryData handles multiple queries and returns multiple responses.
- * req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
- * The QueryDataResponse contains a map of RefID to the response for each query, and each response contains Frames ([]*Frame).
- */
+// QueryData handles multiple queries and returns multiple responses.
+// req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
+// The QueryDataResponse contains a map of RefID to the response for each query, and each response contains Frames ([]*Frame).
 func (ds *redisDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	log.DefaultLogger.Debug("QueryData", "request", req)
 
@@ -85,11 +81,11 @@ func (ds *redisDatasource) QueryData(ctx context.Context, req *backend.QueryData
 		// Add Time for Streaming and filter fields
 		if qm.Streaming && qm.StreamingDataType != "DataFrame" {
 			for _, frame := range resp.Frames {
-				timeValues := []time.Time{}
+				var timeValues []time.Time
 
-				len, _ := frame.RowLen()
-				if len > 0 {
-					for j := 0; j < len; j++ {
+				rowLen, _ := frame.RowLen()
+				if rowLen > 0 {
+					for j := 0; j < rowLen; j++ {
 						timeValues = append(timeValues, time.Now())
 					}
 				}
@@ -105,7 +101,7 @@ func (ds *redisDatasource) QueryData(ctx context.Context, req *backend.QueryData
 						continue
 					}
 
-					filterFields := []*data.Field{}
+					var filterFields []*data.Field
 
 					// Filter fields
 					for _, field := range frame.Fields {
@@ -130,11 +126,9 @@ func (ds *redisDatasource) QueryData(ctx context.Context, req *backend.QueryData
 	return response, nil
 }
 
-/**
- * CheckHealth handles health checks sent from Grafana to the plugin
- *
- * @see https://redis.io/commands/ping
- */
+// CheckHealth handles health checks sent from Grafana to the plugin
+//
+// See https://redis.io/commands/ping
 func (ds *redisDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	var status backend.HealthStatus
 	message := "Data Source health is yet to become known."
@@ -282,9 +276,10 @@ func createRedisClientConfig(setting backend.DataSourceInstanceSettings) (redisC
 	return configuration, nil
 }
 
-/**
- * Called before creating a new instance to close Redis connection pool
- */
+// Dispose is called before a new instance is created, to close the Redis
+// connection pool the old one held.
 func (s *instanceSettings) Dispose() {
-	s.client.Close()
+	if err := s.client.Close(); err != nil {
+		log.DefaultLogger.Error("Error closing Redis client", "error", err.Error())
+	}
 }

@@ -46,7 +46,7 @@ func TestQueryInfo(t *testing.T) {
 				{frameIndex: 0, fieldIndex: 0, rowIndex: 0, value: "info"},
 				{frameIndex: 0, fieldIndex: 1, rowIndex: 0, value: float64(5)},
 				{frameIndex: 0, fieldIndex: 2, rowIndex: 0, value: float64(203)},
-				{frameIndex: 0, fieldIndex: 3, rowIndex: 0, value: float64(40.60)},
+				{frameIndex: 0, fieldIndex: 3, rowIndex: 0, value: 40.60},
 			},
 			nil,
 		},
@@ -60,7 +60,7 @@ func TestQueryInfo(t *testing.T) {
 				{frameIndex: 0, fieldIndex: 0, rowIndex: 0, value: "info"},
 				{frameIndex: 0, fieldIndex: 1, rowIndex: 0, value: float64(5)},
 				{frameIndex: 0, fieldIndex: 2, rowIndex: 0, value: float64(203)},
-				{frameIndex: 0, fieldIndex: 3, rowIndex: 0, value: float64(40.60)},
+				{frameIndex: 0, fieldIndex: 3, rowIndex: 0, value: 40.60},
 				{frameIndex: 0, fieldIndex: 4, rowIndex: 0, value: float64(1)},
 				{frameIndex: 0, fieldIndex: 5, rowIndex: 0, value: float64(0)},
 			},
@@ -334,4 +334,72 @@ func TestQuerySlowlogGet(t *testing.T) {
 			}
 		})
 	}
+}
+
+/**
+ * INFO all, empty sections
+ */
+func TestQueryInfoSkipsEmptySections(t *testing.T) {
+	t.Parallel()
+
+	// A section header with nothing under it carries no data, and an empty
+	// frame in the response would draw an empty panel rather than no panel.
+	client := testClient{rcv: "# Server\r\n\r\n# Clients\r\nconnected_clients:1\r\n"}
+	response := queryInfo(queryModel{Command: "info", Section: "all"}, &client)
+
+	require.NoError(t, response.Error)
+	require.Len(t, response.Frames, 1)
+	require.Equal(t, "clients", response.Frames[0].Name)
+}
+
+/**
+ * INFO errorstats, streaming
+ */
+func TestInfoErrorstatsFrameStreaming(t *testing.T) {
+	t.Parallel()
+
+	lines := []string{"errorstat_ERR:count=12", "errorstat_NOPERM:count=3", "# Errorstats"}
+
+	// Streaming wants one field per error, because a stream appends a row per
+	// tick and the error names are the series. The table form is the opposite:
+	// two fields, one row per error.
+	streaming := infoErrorstatsFrame("info", lines, true)
+	require.Len(t, streaming.Fields, 2)
+	require.Equal(t, "ERR", streaming.Fields[0].Name)
+	require.Equal(t, int64(12), streaming.Fields[0].At(0))
+	require.Equal(t, "NOPERM", streaming.Fields[1].Name)
+	require.Equal(t, int64(3), streaming.Fields[1].At(0))
+
+	table := infoErrorstatsFrame("info", lines, false)
+	require.Len(t, table.Fields, 2)
+	require.Equal(t, "Error", table.Fields[0].Name)
+	require.Equal(t, 2, table.Fields[0].Len())
+}
+
+/**
+ * SLOWLOG GET, malformed entries
+ */
+func TestQuerySlowlogGetSkipsMalformedEntries(t *testing.T) {
+	t.Parallel()
+
+	client := testClient{rcv: []interface{}{
+		"not an entry",
+		[]interface{}{int64(1), int64(2), int64(3)},
+		[]interface{}{int64(1), int64(1700000000), int64(42), "no arguments array"},
+		[]interface{}{
+			int64(7), int64(1700000000), int64(42),
+			[]interface{}{[]byte("GET"), []byte("key")},
+			[]byte("127.0.0.1:6379"), []byte("grafana"),
+		},
+	}}
+
+	response := querySlowlogGet(queryModel{Command: "slowlogGet"}, &client)
+	require.NoError(t, response.Error)
+
+	// Only the well-formed entry becomes a row: an entry with no arguments
+	// array has no command to report, and one shorter than four elements is
+	// missing the id, timestamp or duration the frame is keyed on.
+	require.Equal(t, 1, response.Frames[0].Fields[0].Len())
+	require.Equal(t, int64(7), response.Frames[0].Fields[0].At(0))
+	require.Equal(t, "GET key", response.Frames[0].Fields[3].At(0))
 }

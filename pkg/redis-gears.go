@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -88,7 +91,7 @@ func queryRgDumpregistrations(qm queryModel, client redisClient) backend.DataRes
 		// Merging args to string like "key"="value"\n
 		args := new(bytes.Buffer)
 		for key, value := range registration.RegistrationData.Args {
-			fmt.Fprintf(args, "\"%s\"=\"%s\"\n", key, value)
+			_, _ = fmt.Fprintf(args, "\"%s\"=\"%s\"\n", key, value)
 		}
 
 		frame.AppendRow(registration.ID, registration.Reader, registration.Desc, registration.PD, registration.RegistrationData.Mode,

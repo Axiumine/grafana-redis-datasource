@@ -170,7 +170,7 @@ func TestInfoGenericFrame(t *testing.T) {
 
 	frame := infoGenericFrame(models.Info, splitInfoLines(payload))
 
-	names := []string{}
+	var names []string
 	for _, field := range frame.Fields {
 		names = append(names, field.Name)
 	}
@@ -294,4 +294,87 @@ func TestInfoSearchFrame(t *testing.T) {
 	require.Equal(t, float64(1), fields["search_fields_numeric_Numeric"], "every field type is expanded")
 	require.Equal(t, "", fields["search_extension_load"], "an empty configuration value stays empty")
 	require.Equal(t, "BM25STD", fields["search_default_scorer"], "sub section headers are skipped")
+}
+
+/**
+ * infoModulesFrame, malformed lines
+ */
+func TestInfoModulesFrameSkipsUnnamedModules(t *testing.T) {
+	// A module line carrying no name= pair identifies nothing, so it cannot
+	// become a row: the name is the frame's key column.
+	frame := infoModulesFrame("info", []string{
+		"module:ver=80100,api=1",
+		"module:name=search,ver=80100",
+		"not_a_module:name=ignored",
+		"# Modules",
+	})
+
+	require.Equal(t, 1, frame.Fields[0].Len())
+	require.Equal(t, "search", frame.Fields[0].At(0))
+}
+
+/**
+ * infoKeysizesFrame, malformed lines
+ */
+func TestInfoKeysizesFrameSkipsMalformedLines(t *testing.T) {
+	frame := infoKeysizesFrame("info", []string{
+		"db0_distrib_strings_sizes:1=2,4=1",
+		"db0_something_else:1=2",   // no _distrib_ marker
+		"db0_distrib_lists_items:", // no pairs at all
+		"db0_distrib_sets_items:small=3,2=notanumber,8=4",
+		"# Keysizes",
+	})
+
+	// Only the four well-formed buckets survive: a non-numeric bucket and a
+	// non-numeric count are both dropped rather than folded into zero.
+	require.Equal(t, 3, frame.Fields[0].Len())
+	require.Equal(t, []interface{}{int64(1), int64(4), int64(8)},
+		[]interface{}{frame.Fields[3].At(0), frame.Fields[3].At(1), frame.Fields[3].At(2)})
+	require.Equal(t, "sets", frame.Fields[1].At(2))
+	require.Equal(t, "items", frame.Fields[2].At(2))
+}
+
+/**
+ * keysizesRange
+ */
+func TestKeysizesRange(t *testing.T) {
+	// Buckets are power-of-two lower bounds, so bucket 4 covers 4 to 7. Bucket
+	// 1 covers only itself, and a bucket below 1 is not an interval at all.
+	require.Equal(t, "4-7", keysizesRange(4))
+	require.Equal(t, "1", keysizesRange(1))
+	require.Equal(t, "0", keysizesRange(0))
+	require.Equal(t, "-2", keysizesRange(-2))
+}
+
+/**
+ * recordValuePairs
+ */
+func TestRecordValuePairs(t *testing.T) {
+	require.Equal(t, []infoPair{{Key: "Text", Value: "2"}, {Key: "IndexErrors", Value: "0"}},
+		recordValuePairs("Text=2,IndexErrors=0"))
+
+	// Anything that is not uniformly k=v is a plain string. Expanding one of
+	// these would invent fields out of an ordinary value.
+	require.Nil(t, recordValuePairs("jemalloc-5.3.0"), "a value with no separator")
+	require.Nil(t, recordValuePairs("Text=2,plain"), "a member with no separator")
+	require.Nil(t, recordValuePairs("=2"), "a member with an empty key")
+	require.Nil(t, recordValuePairs("Text=a=b"), "a member whose value holds a separator")
+}
+
+/**
+ * infoSectionFrame routing
+ */
+func TestInfoSectionFrameRouting(t *testing.T) {
+	// Every section has to reach the parser that fits its shape; falling
+	// through to the generic wide frame would silently lose the long ones.
+	keysizes := infoSectionFrame("info", sectionKeysizes, []string{"db0_distrib_strings_sizes:1=2"}, false)
+	require.Equal(t, "Bucket", keysizes.Fields[3].Name)
+
+	modules := infoSectionFrame("info", sectionModules, []string{"module:name=search,ver=80100"}, false)
+	require.Equal(t, "Name", modules.Fields[0].Name)
+	require.Equal(t, "search", modules.Fields[0].At(0))
+
+	threads := infoSectionFrame("info", sectionThreads, []string{"io_thread_0:clients=0,reads=1,writes=2"}, false)
+	require.Equal(t, "0", threads.Fields[0].At(0), "the io_thread_ prefix is trimmed off the name")
+	require.Equal(t, int64Pointer(1), threads.Fields[2].At(0))
 }

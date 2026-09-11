@@ -42,7 +42,8 @@ export class TimeSeriesStreaming {
   /**
    * Add new values for the frame
    *
-   * @param request
+   * @param {any} fields Fields of the frame the reply produced
+   * @returns {Promise<CircularDataFrame>} The updated circular frame
    */
   async update(fields: any): Promise<CircularDataFrame> {
     let values: { [index: string]: number } = {};

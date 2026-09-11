@@ -64,7 +64,7 @@ type fakeInstanceManager struct {
 /**
  * FlatCmd()
  */
-func (client *testClient) RunFlatCmd(rcv interface{}, cmd, key string, args ...interface{}) error {
+func (client *testClient) RunFlatCmd(rcv interface{}, _, _ string, _ ...interface{}) error {
 	if client.err != nil {
 		return client.err
 	}
@@ -123,6 +123,17 @@ func int64Pointer(value int64) *int64 {
  * Receiver
  */
 func assignReceiver(to interface{}, from interface{}) {
+	// A nil reply is a value in its own right — HOTKEYS GET answers with one
+	// when tracking was never started — so it has to reach the receiver as nil
+	// rather than fall through to the type switch, whose default panics on a
+	// reflect.TypeOf(nil) that has no name to report.
+	if from == nil {
+		if receiver, ok := to.(*interface{}); ok {
+			*receiver = nil
+			return
+		}
+	}
+
 	switch to.(type) {
 	case int:
 		*(to.(*int)) = from.(int)
@@ -209,14 +220,14 @@ func (client *testClient) Close() error {
 /**
  * FlatCmd() Error
  */
-func (client *panickingClient) RunFlatCmd(rcv interface{}, cmd, key string, args ...interface{}) error {
+func (client *panickingClient) RunFlatCmd(_ interface{}, _, _ string, _ ...interface{}) error {
 	panic("Panic")
 }
 
 /**
  * Cmd() Error
  */
-func (client *panickingClient) RunCmd(rcv interface{}, cmd string, args ...string) error {
+func (client *panickingClient) RunCmd(_ interface{}, _ string, _ ...string) error {
 	panic("Panic")
 }
 
@@ -230,14 +241,14 @@ func (client *panickingClient) Close() error {
 /**
  * Batch command
  */
-func (client *panickingClient) RunBatchFlatCmd(commands []flatCommandArgs) error {
+func (client *panickingClient) RunBatchFlatCmd(_ []flatCommandArgs) error {
 	panic("Panic")
 }
 
 /**
  * Get
  */
-func (im *fakeInstanceManager) Get(ctx context.Context, pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
+func (im *fakeInstanceManager) Get(_ context.Context, pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	args := im.Called(pluginContext)
 	return args.Get(0), args.Error(1)
 }
@@ -245,7 +256,7 @@ func (im *fakeInstanceManager) Get(ctx context.Context, pluginContext backend.Pl
 /**
  * Do
  */
-func (im *fakeInstanceManager) Do(ctx context.Context, pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
+func (im *fakeInstanceManager) Do(_ context.Context, pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
 	args := im.Called(pluginContext, fn)
 	return args.Error(0)
 }

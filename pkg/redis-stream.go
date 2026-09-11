@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -64,7 +67,7 @@ func queryXInfoStream(qm queryModel, client redisClient) backend.DataResponse {
 		for i := 0; i < len(entryFields); i += 2 {
 			field := string(entryFields[i].([]byte))
 			value := string(entryFields[i+1].([]byte))
-			fmt.Fprintf(fields, "\"%s\"=\"%s\"\n", field, value)
+			_, _ = fmt.Fprintf(fields, "\"%s\"=\"%s\"\n", field, value)
 		}
 
 		frame.Fields = append(frame.Fields, data.NewField("first-entry-fields", nil, []string{fields.String()}))
@@ -80,7 +83,7 @@ func queryXInfoStream(qm queryModel, client redisClient) backend.DataResponse {
 		for i := 0; i < len(entryFields); i += 2 {
 			field := string(entryFields[i].([]byte))
 			value := string(entryFields[i+1].([]byte))
-			fmt.Fprintf(fields, "\"%s\"=\"%s\"\n", field, value)
+			_, _ = fmt.Fprintf(fields, "\"%s\"=\"%s\"\n", field, value)
 		}
 
 		frame.Fields = append(frame.Fields, data.NewField("last-entry-fields", nil, []string{fields.String()}))
@@ -215,7 +218,7 @@ func createFrameFromRangeResponse(command string, result []interface{}) *data.Fr
 		// Check if Time extracted
 		if (len(timeStr)) > 0 {
 			unixTime, _ := strconv.ParseInt(timeStr[0], 10, 64)
-			ts = time.Unix(0, int64(unixTime)*int64(time.Millisecond))
+			ts = time.Unix(0, unixTime*int64(time.Millisecond))
 		}
 
 		// Add Time

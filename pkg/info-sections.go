@@ -80,7 +80,7 @@ func infoKeyspaceFrame(name string, lines []string) *data.Frame {
  * per module, all called "module".
  */
 func infoModulesFrame(name string, lines []string) *data.Frame {
-	records := []infoRecord{}
+	var records []infoRecord
 
 	for _, line := range lines {
 		key, value, ok := splitInfoLine(line)
@@ -89,7 +89,7 @@ func infoModulesFrame(name string, lines []string) *data.Frame {
 		}
 
 		moduleName := ""
-		pairs := []infoPair{}
+		var pairs []infoPair
 
 		for _, pair := range parseInfoPairs(value) {
 			if pair.Key == "name" {

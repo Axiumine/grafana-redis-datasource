@@ -60,7 +60,8 @@ export class QueryEditor extends PureComponent<Props> {
   /**
    * Change handler for number field
    *
-   * @param {ChangeEvent<HTMLInputElement>} event Event
+   * @param {keyof RedisQuery} name Query property the handler writes to
+   * @returns {(event: ChangeEvent<HTMLInputElement>) => void} Change handler
    */
   createNumberFieldHandler = (name: keyof RedisQuery) => (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({ ...this.props.query, [name]: Number(event.target.value) });
@@ -69,7 +70,8 @@ export class QueryEditor extends PureComponent<Props> {
   /**
    * Change handler for text field
    *
-   * @param {ChangeEvent<HTMLInputElement>} event Event
+   * @param {keyof RedisQuery} name Query property the handler writes to
+   * @returns {(event: ChangeEvent<HTMLInputElement>) => void} Change handler
    */
   createTextFieldHandler = (name: keyof RedisQuery) => (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({ ...this.props.query, [name]: event.target.value });
@@ -78,7 +80,8 @@ export class QueryEditor extends PureComponent<Props> {
   /**
    * Change handler for textarea field
    *
-   * @param {ChangeEvent<HTMLInputElement>} event Event
+   * @param {keyof RedisQuery} name Query property the handler writes to
+   * @returns {(event: ChangeEvent<HTMLTextAreaElement>) => void} Change handler
    */
   createTextareaFieldHandler = (name: keyof RedisQuery) => (event: ChangeEvent<HTMLTextAreaElement>) => {
     this.props.onChange({ ...this.props.query, [name]: event.target.value });
@@ -87,7 +90,8 @@ export class QueryEditor extends PureComponent<Props> {
   /**
    * Change handler for select field
    *
-   * @param {ChangeEvent<HTMLInputElement>} event Event
+   * @param {keyof RedisQuery} name Query property the handler writes to
+   * @returns {(val: SelectableValue<ValueType>) => void} Change handler
    */
   createSelectFieldHandler<ValueType>(name: keyof RedisQuery) {
     return (val: SelectableValue<ValueType>) => {
@@ -98,7 +102,8 @@ export class QueryEditor extends PureComponent<Props> {
   /**
    * Change handler for radio button field
    *
-   * @param {value: ValueType}
+   * @param {keyof RedisQuery} name Query property the handler writes to
+   * @returns {(value?: ValueType) => void} Change handler
    */
   createRedioButtonFieldHandler<ValueType>(name: keyof RedisQuery) {
     return (value?: ValueType) => {
@@ -109,7 +114,8 @@ export class QueryEditor extends PureComponent<Props> {
   /**
    * Change handler for switch field
    *
-   * @param {ChangeEvent<HTMLInputElement>} event Event
+   * @param {keyof RedisQuery} name Query property the handler writes to
+   * @returns {(event: React.SyntheticEvent<HTMLInputElement>) => void} Change handler
    */
   createSwitchFieldHandler = (name: keyof RedisQuery) => (event: React.SyntheticEvent<HTMLInputElement>) => {
     this.props.onChange({ ...this.props.query, [name]: event.currentTarget.checked });

@@ -6,7 +6,8 @@
 
 # Runs Qodana over the working tree before a commit is created, and enforces the
 # quality gate declared in qodana-go.yaml and qodana-js.yaml: no CRITICAL and no
-# HIGH problems, and 100% test coverage both overall and on changed lines.
+# HIGH problems, 100% test coverage on changed lines, and a measured overall
+# floor — 99% for the Go backend, 100% for the TypeScript frontend.
 #
 # One Qodana run analyses one linter image, so the Go backend and the TypeScript
 # frontend are two runs. Both need an Ultimate or Ultimate Plus licence —
@@ -18,6 +19,15 @@
 #   QODANA_LINTERS=go git commit ... run only one of: go, js, "go js"
 #   QODANA_REQUIRED=1                turn a missing token into a hard failure
 #                                    instead of a skip
+
+# The linter caches go outside the working tree on purpose. Qodana mounts the
+# cache directory as well as the project, and Go's module cache lives inside it,
+# so a cache under .qodana/ would put the whole downloaded toolchain and every
+# dependency's source inside the analysed project: indexing crawls through the
+# standard library's own _asm modules and the run never finishes. Only the
+# results directory, which holds logs, stays in the repository, and .gitignore
+# already covers it.
+CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}/qodana-precommit
 
 set -u
 
@@ -72,6 +82,25 @@ if [ -z "${QODANA_TOKEN:-}" ]; then
   exit 0
 fi
 
+# Qodana mounts the project at /data/project and runs git there. In this
+# checkout `.git` is a file pointing at the umbrella repository's
+# .git/modules/grafana-redis-datasource, which lives outside the mount, so git
+# inside the container reports "fatal: not a git repository" and Qodana loses
+# the history it attributes fresh code with. Mounting the real git directory and
+# naming it through GIT_DIR restores that. GIT_WORK_TREE has to come with it:
+# the submodule's config sets core.worktree to a path relative to the git
+# directory, which resolves to the wrong place under the container's layout, and
+# the environment variable is what overrides it.
+GIT_MOUNT=()
+if [ ! -d .git ]; then
+  GIT_DIR_HOST=$(git rev-parse --absolute-git-dir)
+  GIT_MOUNT=(
+    --volume "$GIT_DIR_HOST:/data/git-dir"
+    --env GIT_DIR=/data/git-dir
+    --env GIT_WORK_TREE=/data/project
+  )
+fi
+
 STATUS=0
 
 for LINTER in $LINTERS; do
@@ -90,9 +119,10 @@ for LINTER in $LINTERS; do
   if ! qodana scan \
     --config "$CONFIG" \
     --results-dir ".qodana/$LINTER" \
-    --cache-dir ".qodana/cache-$LINTER" \
+    --cache-dir "$CACHE_HOME/$LINTER" \
     --save-report=false \
-    --print-problems; then
+    --print-problems \
+    "${GIT_MOUNT[@]}"; then
     STATUS=1
     echo ""
     echo "  Qodana quality gate failed for $CONFIG."
@@ -103,9 +133,9 @@ if [ "$STATUS" -ne 0 ]; then
   echo ""
   echo "  COMMIT REJECTED BY QODANA"
   echo ""
-  echo "  The gate is: 0 CRITICAL, 0 HIGH, 100% total coverage, 100% fresh"
-  echo "  coverage. Fix the problems above, or commit with SKIP_QODANA=1 if the"
-  echo "  failure is not yours to fix in this commit."
+  echo "  The gate is: 0 CRITICAL, 0 HIGH, 100% coverage on changed lines, and"
+  echo "  the overall floor each config declares. Fix the problems above, or"
+  echo "  commit with SKIP_QODANA=1 if the failure is not yours to fix here."
   echo ""
   exit 1
 fi

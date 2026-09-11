@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -155,14 +158,30 @@ func TestCreateRedisClientConfig(t *testing.T) {
  * Dispose
  */
 func TestDispose(t *testing.T) {
-	// Client
-	client := &testClient{}
-	client.On("Close").Return(nil)
+	t.Run("should close the client", func(t *testing.T) {
+		// Client
+		client := &testClient{}
+		client.On("Close").Return(nil)
 
-	// Instance
-	is := instanceSettings{client}
-	is.Dispose()
-	client.AssertNumberOfCalls(t, "Close", 1)
+		// Instance
+		is := instanceSettings{client}
+		is.Dispose()
+		client.AssertNumberOfCalls(t, "Close", 1)
+	})
+
+	// Dispose returns nothing, so a pool that refuses to close has nowhere to
+	// report but the log. The branch still has to run: otherwise its first
+	// execution anywhere is on a datasource being torn down in production.
+	t.Run("should log a client that fails to close", func(t *testing.T) {
+		// Client
+		client := &testClient{}
+		client.On("Close").Return(errors.New("connection reset by peer"))
+
+		// Instance
+		is := instanceSettings{client}
+		is.Dispose()
+		client.AssertNumberOfCalls(t, "Close", 1)
+	})
 }
 
 /**
@@ -233,6 +252,10 @@ func TestQueryData(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	if response == nil {
+		t.Fatal("QueryData returned no response")
+		return
+	}
 	require.Len(t, response.Responses, 1)
 }
 
@@ -392,6 +415,10 @@ func TestStreamingTimeSeries(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	if response == nil {
+		t.Fatal("QueryData returned no response")
+		return
+	}
 	require.Len(t, response.Responses, 1)
 	require.Len(t, response.Responses["A"].Frames, 1)
 
@@ -437,6 +464,10 @@ func TestStreamingTimeSeriesWithField(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	if response == nil {
+		t.Fatal("QueryData returned no response")
+		return
+	}
 	require.Len(t, response.Responses, 1)
 	require.Len(t, response.Responses["A"].Frames, 1)
 
@@ -482,11 +513,15 @@ func TestStreamingTimeSeriesWithErrorField(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	if response == nil {
+		t.Fatal("QueryData returned no response")
+		return
+	}
 	require.Len(t, response.Responses, 1)
 	require.Len(t, response.Responses["A"].Frames, 1)
 
-	error := response.Responses["A"].Error
-	require.EqualError(t, error, "field is not valid")
+	queryError := response.Responses["A"].Error
+	require.EqualError(t, queryError, "field is not valid")
 }
 
 /**
@@ -522,6 +557,10 @@ func TestStreamingTimeSeriesWithWrongField(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	if response == nil {
+		t.Fatal("QueryData returned no response")
+		return
+	}
 	require.Len(t, response.Responses, 1)
 	require.Len(t, response.Responses["A"].Frames, 1)
 

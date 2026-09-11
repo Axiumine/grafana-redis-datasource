@@ -16,7 +16,7 @@ import (
 /**
  * Query commands
  */
-func query(ctx context.Context, query backend.DataQuery, client redisClient, qm queryModel) backend.DataResponse {
+func query(_ context.Context, query backend.DataQuery, client redisClient, qm queryModel) backend.DataResponse {
 	// From and To
 	from := query.TimeRange.From.UnixNano() / 1000000
 	to := query.TimeRange.To.UnixNano() / 1000000

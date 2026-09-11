@@ -41,7 +41,7 @@ func splitInfoLines(result string) []string {
  * support) are collected under an empty section name.
  */
 func splitInfoSections(lines []string) []infoSection {
-	sections := []infoSection{}
+	var sections []infoSection
 	current := infoSection{}
 
 	for _, line := range lines {
@@ -101,7 +101,7 @@ func splitInfoLine(line string) (string, string, bool) {
  * split keeps the parser correct if that ever changes.
  */
 func splitTopLevel(value string, sep byte) []string {
-	parts := []string{}
+	var parts []string
 	depth := 0
 	start := 0
 
@@ -137,7 +137,7 @@ type infoPair struct {
  * of the record.
  */
 func parseInfoPairs(value string) []infoPair {
-	pairs := []infoPair{}
+	var pairs []infoPair
 
 	for _, element := range splitTopLevel(value, ',') {
 		element = strings.TrimSpace(element)
@@ -191,7 +191,7 @@ type infoRecord struct {
  * "latency_percentiles_usec_client|setinfo" becomes "client|setinfo".
  */
 func parseInfoRecords(lines []string, trimPrefix string) []infoRecord {
-	records := []infoRecord{}
+	var records []infoRecord
 
 	for _, line := range lines {
 		name, value, ok := splitInfoLine(line)
@@ -224,7 +224,7 @@ func parseInfoRecords(lines []string, trimPrefix string) []infoRecord {
  */
 func recordsToFrame(frameName string, nameColumn string, records []infoRecord, unit string) *data.Frame {
 	// Ordered union of the keys, plus the widest type required by each
-	order := []string{}
+	var order []string
 	kinds := map[string]int{}
 
 	for _, record := range records {

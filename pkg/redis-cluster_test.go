@@ -186,3 +186,20 @@ func TestQueryClusterNodes(t *testing.T) {
 		})
 	}
 }
+
+/**
+ * countClusterSlots, malformed slot fields
+ */
+func TestCountClusterSlotsSkipsMalformedFields(t *testing.T) {
+	t.Parallel()
+
+	// A slot field that does not parse is skipped rather than counted as zero:
+	// an unparseable bound is not a slot the node actually serves, and folding
+	// it into the total would overstate the coverage of the cluster.
+	require.Equal(t, int64(0), countClusterSlots([]string{"abc"}), "an unparseable lower bound")
+	require.Equal(t, int64(0), countClusterSlots([]string{"0-xyz"}), "an unparseable upper bound")
+	require.Equal(t, int64(1), countClusterSlots([]string{"5"}), "a single slot")
+	require.Equal(t, int64(0), countClusterSlots([]string{"[93-<-abc]"}), "a migrating slot")
+	require.Equal(t, int64(0), countClusterSlots([]string{"100-99"}), "an inverted range")
+	require.Equal(t, int64(3), countClusterSlots([]string{"abc", "0-1", "9"}), "the rest of the line survives")
+}

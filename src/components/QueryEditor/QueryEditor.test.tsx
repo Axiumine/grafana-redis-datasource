@@ -70,12 +70,12 @@ const selectedOptionLabel = (element: HTMLElement): string =>
  * the two concatenated. Matching on the label alone would also match every option whose label
  * merely starts with it, hence the comparison against the label element itself.
  */
-const byOptionLabel = (option: SelectableValue<any>) => (_name: string, element: Element | null) =>
+const byOptionLabel = (option: SelectableValue) => (_name: string, element: Element | null) =>
   element?.querySelector('span')?.textContent === option.label;
 
 const openMenu = (element: HTMLElement) => fireEvent.keyDown(element, { key: 'ArrowDown', code: 'ArrowDown' });
 
-const selectOption = (element: HTMLElement, option: SelectableValue<any>) => {
+const selectOption = (element: HTMLElement, option: SelectableValue) => {
   openMenu(element);
   fireEvent.click(screen.getByRole('option', { name: byOptionLabel(option) }));
 };
@@ -100,7 +100,7 @@ interface QueryFieldTest {
    * of its own options, so the first entry stands in for the value carried by the query and the
    * second for the value the test switches to.
    */
-  options?: Array<SelectableValue<any>>;
+  options?: Array<SelectableValue>;
 }
 
 /**

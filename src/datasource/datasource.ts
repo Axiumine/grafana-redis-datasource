@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 import { lastValueFrom, Observable } from 'rxjs';
 import { map as map$, switchMap as switchMap$ } from 'rxjs/operators';
 import {
@@ -134,21 +137,31 @@ export class DataSource extends DataSourceWithBackend<RedisQuery, RedisDataSourc
       /**
        * Interval
        */
-      const intervalId = setInterval(async () => {
-        const response = await lastValueFrom(super.query(request));
+      const intervalId = setInterval(
+        async () => {
+          const response = await lastValueFrom(super.query(request));
 
-        response.data.forEach(async (frame) => {
-          if (frames[frame.refId]) {
-            frame = await frames[frame.refId].update(frame.fields);
-          }
+          /**
+           * Every frame is updated concurrently, as it was before, but the promises
+           * are awaited rather than dropped on the floor: an update that rejects
+           * used to become an unhandled rejection with nothing to attribute it to.
+           */
+          await Promise.all(
+            response.data.map(async (frame) => {
+              if (frames[frame.refId]) {
+                frame = await frames[frame.refId].update(frame.fields);
+              }
 
-          subscriber.next({
-            data: [frame],
-            key: frame.refId,
-            state: LoadingState.Streaming,
-          });
-        });
-      }, Math.min(...streamingInterval));
+              subscriber.next({
+                data: [frame],
+                key: frame.refId,
+                state: LoadingState.Streaming,
+              });
+            })
+          );
+        },
+        Math.min(...streamingInterval)
+      );
 
       return () => {
         clearInterval(intervalId);
