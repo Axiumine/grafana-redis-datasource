@@ -29,3 +29,16 @@ vendor/
 
 # Caches
 .eslintcache
+
+# Secrets. QODANA_TOKEN and GRAFANA_ACCESS_POLICY_TOKEN live here, and this
+# repository is public. A global core.excludesFile is not enough: it does not
+# travel with a clone, so the rule has to be in the repository itself.
+.env
+.env.*
+!.env.example
+
+# Qodana. The CLI writes its cache and its results under the project root; the
+# coverage the linters produce through their bootstrap lands in coverage/, which
+# is already ignored above.
+.qodana/
+qodana.sarif.json

@@ -35,8 +35,11 @@ jobs:
           primary-cache-key: qodana-go-${{ github.ref }}-${{ github.sha }}
           additional-cache-key: qodana-go-${{ github.ref }}
 
+      # always(), because the scan step exits non-zero as soon as a
+      # failureConditions threshold is breached. Without it a failed quality
+      # gate would withhold the very findings that explain the failure.
       - name: Upload backend results to code scanning
-        if: env.QODANA_TOKEN != ''
+        if: always() && env.QODANA_TOKEN != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
@@ -62,7 +65,7 @@ jobs:
           additional-cache-key: qodana-js-${{ github.ref }}
 
       - name: Upload frontend results to code scanning
-        if: env.QODANA_TOKEN != ''
+        if: always() && env.QODANA_TOKEN != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json

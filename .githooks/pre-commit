@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+# Runs Qodana over the working tree before a commit is created, and enforces the
+# quality gate declared in qodana-go.yaml and qodana-js.yaml: no CRITICAL and no
+# HIGH problems, and 100% test coverage both overall and on changed lines.
+#
+# One Qodana run analyses one linter image, so the Go backend and the TypeScript
+# frontend are two runs. Both need an Ultimate or Ultimate Plus licence —
+# qodana-go and qodana-js have no Community edition — which the CLI verifies
+# against Qodana Cloud using QODANA_TOKEN.
+#
+# Escape hatches:
+#   SKIP_QODANA=1 git commit ...     skip this hook entirely
+#   QODANA_LINTERS=go git commit ... run only one of: go, js, "go js"
+#   QODANA_REQUIRED=1                turn a missing token into a hard failure
+#                                    instead of a skip
+
+set -u
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT" || exit 1
+
+if [ "${SKIP_QODANA:-0}" = "1" ]; then
+  echo "  Qodana skipped (SKIP_QODANA=1)."
+  exit 0
+fi
+
+LINTERS=${QODANA_LINTERS:-"go js"}
+
+# Load the tokens from the untracked .env, without printing them. `set -a`
+# exports every assignment the file makes, which is how the CLI receives
+# QODANA_TOKEN.
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
+
+fail() {
+  echo ""
+  echo "  $1"
+  echo ""
+  exit 1
+}
+
+if ! command -v qodana >/dev/null 2>&1; then
+  fail "Qodana CLI not found. Install it from https://github.com/JetBrains/qodana-cli
+  or commit with SKIP_QODANA=1 if you cannot."
+fi
+
+if ! docker info >/dev/null 2>&1; then
+  fail "Qodana runs its linters in Docker, and the daemon is not reachable.
+  Start Docker, or commit with SKIP_QODANA=1."
+fi
+
+if [ -z "${QODANA_TOKEN:-}" ]; then
+  if [ "${QODANA_REQUIRED:-0}" = "1" ]; then
+    fail "QODANA_TOKEN is not set, and QODANA_REQUIRED=1.
+  qodana-go and qodana-js have no Community edition, so neither linter can
+  start without a licence. Put the token in .env, which is gitignored."
+  fi
+  echo ""
+  echo "  Qodana skipped: QODANA_TOKEN is not set."
+  echo "  qodana-go and qodana-js have no Community edition, so neither linter"
+  echo "  runs without a licence. Put the token in .env to enable this hook."
+  echo ""
+  exit 0
+fi
+
+STATUS=0
+
+for LINTER in $LINTERS; do
+  CONFIG="qodana-$LINTER.yaml"
+  if [ ! -f "$CONFIG" ]; then
+    fail "No $CONFIG in the repository root."
+  fi
+
+  echo ""
+  echo "  Qodana: scanning with $CONFIG ..."
+  echo ""
+
+  # --save-report=false keeps the hook to the analysis and the quality gate; the
+  # HTML report is what CI and Qodana Cloud are for. The CLI exits non-zero when
+  # a failureConditions threshold is breached, which is what gates the commit.
+  if ! qodana scan \
+    --config "$CONFIG" \
+    --results-dir ".qodana/$LINTER" \
+    --cache-dir ".qodana/cache-$LINTER" \
+    --save-report=false \
+    --print-problems; then
+    STATUS=1
+    echo ""
+    echo "  Qodana quality gate failed for $CONFIG."
+  fi
+done
+
+if [ "$STATUS" -ne 0 ]; then
+  echo ""
+  echo "  COMMIT REJECTED BY QODANA"
+  echo ""
+  echo "  The gate is: 0 CRITICAL, 0 HIGH, 100% total coverage, 100% fresh"
+  echo "  coverage. Fix the problems above, or commit with SKIP_QODANA=1 if the"
+  echo "  failure is not yours to fix in this commit."
+  echo ""
+  exit 1
+fi
+
+echo ""
+echo "  Qodana: quality gate passed."
+echo ""
+exit 0

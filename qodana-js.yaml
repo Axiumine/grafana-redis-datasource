@@ -7,17 +7,51 @@ version: '1.0'
 
 linter: qodana-js
 
-# The same install the three workflows run, so module resolution matches what
-# CI actually builds against.
-bootstrap: yarn install --frozen-lockfile
-
+# qodana-js has no Community edition either, so this run also needs an Ultimate
+# or Ultimate Plus licence verified through QODANA_TOKEN.
 profile:
   name: qodana.recommended
-  inspections:
-    - group: ALL
-      ignore:
-        - 'pkg/**'
-        - 'dist/**'
-        - 'node_modules/**'
-        - 'vendor/**'
-        - '.config/**'
+
+# The same install the workflows run, so module resolution matches what CI
+# builds against, followed by the single coverage pass. Jest writes
+# coverage/lcov.info by default, which is the path Qodana looks for.
+bootstrap: |
+  yarn install --frozen-lockfile
+  yarn test:ci
+
+# The Go backend is the other linter's job, and `name: All` is the whole
+# inspection set. See the note in qodana-go.yaml on why this is `exclude` and
+# not `profile.inspections`.
+exclude:
+  - name: All
+    paths:
+      - pkg
+      - dist
+      - node_modules
+      - vendor
+      - .config
+      - coverage
+
+# Ultimate Plus. analyzeDevDependencies widens the vulnerability checker and the
+# licence audit to devDependencies, which for a plugin is most of the tree: the
+# build toolchain is installed from the same lockfile the release is built with.
+raiseLicenseProblems: true
+enablePackageSearch: true
+analyzeDevDependencies: true
+
+licenseRules:
+  - keys:
+      - Apache-2.0
+    prohibited:
+      - GPL-2.0
+      - GPL-3.0
+      - AGPL-3.0
+      - SSPL-1.0
+
+failureConditions:
+  severityThresholds:
+    critical: 0
+    high: 0
+  testCoverageThresholds:
+    total: 100 # whole project
+    fresh: 100 # new / changed code

@@ -7,19 +7,57 @@ version: '1.0'
 
 linter: qodana-go
 
-# Restore the module graph inside the linter container before analysis, so that
-# imports resolve. GOTOOLCHAIN=auto is Go's own default: if the image ships a Go
-# older than the 1.26.8 floor in go.mod, this makes it fetch 1.26.8 rather than
-# analyse against an older standard library.
-bootstrap: GOTOOLCHAIN=auto go mod download
-
+# qodana-go has no Community edition, so every run needs an Ultimate or Ultimate
+# Plus licence verified against Qodana Cloud through QODANA_TOKEN.
 profile:
   name: qodana.recommended
-  inspections:
-    - group: ALL
-      ignore:
-        - 'src/**'
-        - 'dist/**'
-        - 'node_modules/**'
-        - 'vendor/**'
-        - '.config/**'
+
+# Restore the module graph and write the coverage profile inside the linter
+# container. GOTOOLCHAIN=auto is Go's own default: if the image ships a Go older
+# than the 1.26.8 floor in go.mod it fetches 1.26.8 rather than analysing
+# against an older standard library. Qodana finds Go coverage by looking for
+# coverage/coverage.out or coverage/cover.out, so the name is not free —
+# `mage cover` writes coverage/backend.txt, which Qodana would not see.
+bootstrap: |
+  GOTOOLCHAIN=auto go mod download
+  mkdir -p coverage
+  GOTOOLCHAIN=auto go test ./pkg/... -covermode=atomic -coverprofile=coverage/coverage.out
+
+# The frontend, the build output and the vendored trees are the JavaScript
+# linter's job or nobody's. `name: All` means the whole inspection set, and this
+# is the syntax the CLI actually parses — a `profile.inspections` list is
+# accepted by the YAML reader and then ignored, because Profile carries only
+# `name` and `path`.
+exclude:
+  - name: All
+    paths:
+      - src
+      - dist
+      - node_modules
+      - vendor
+      - .config
+      - coverage
+
+# Ultimate Plus. The vulnerability checker and the licence audit both run from
+# here; raiseLicenseProblems turns a licence violation into an inspection result
+# so that it counts against the severity thresholds below rather than sitting in
+# a report nobody gates on.
+raiseLicenseProblems: true
+enablePackageSearch: true
+
+licenseRules:
+  - keys:
+      - Apache-2.0
+    prohibited:
+      - GPL-2.0
+      - GPL-3.0
+      - AGPL-3.0
+      - SSPL-1.0
+
+failureConditions:
+  severityThresholds:
+    critical: 0
+    high: 0
+  testCoverageThresholds:
+    total: 100 # whole project
+    fresh: 100 # new / changed code

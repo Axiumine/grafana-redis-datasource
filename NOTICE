@@ -61,6 +61,7 @@ notice at the top, per Apache-2.0 section 4(b):
   Added
     NOTICE
     .githooks/commit-msg
+    .githooks/pre-commit
     .github/dependabot.yml
     .github/workflows/qodana.yml
     .nvmrc
@@ -73,6 +74,7 @@ notice at the top, per Apache-2.0 section 4(b):
     pkg/info-sections_test.go
     pkg/redis-hotkeys.go
     pkg/redis-value.go
+    tools/package-tag.sh
 
   Removed
     config/jest-setup.ts
@@ -112,4 +114,4 @@ completeness rather than as our work:
     .config/webpack/BuildModeWebpackPlugin.ts
     .config/webpack/webpack.config.ts
 
-See CHANGELOG.md, entries 2.3.0 and Unreleased, for what changed and why.
+See CHANGELOG.md, entries 3.0.0 and 2.3.0, for what changed and why.
