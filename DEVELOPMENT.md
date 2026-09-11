@@ -173,6 +173,14 @@ that says so is "Could not find root URL that matches running application URL".
 Adding an instance means adding it to the list and re-signing. The signature is
 a file inside the zip, so re-signing is a rebuild and nothing more.
 
+The Release workflow signs from the same two values, read out of the repository
+rather than off the local disk: `GRAFANA_ACCESS_POLICY_TOKEN` as an Actions
+**secret** and `GRAFANA_PLUGIN_ROOT_URLS` as an Actions **variable**. The second
+is a variable rather than a secret because it is not one, and a repository
+variable keeps the list of instances out of a workflow file that anybody can
+read. The signing step checks both before it calls the signing service, so a
+missing one fails with a sentence instead of an HTTP status.
+
 A tag whose id cannot be signed is built unsigned without being asked to.
 grafana.com issues a signature only when the first segment of the plugin id
 names the organisation behind the access policy, so `v2.3.0`, whose tree still

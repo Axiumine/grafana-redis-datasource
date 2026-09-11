@@ -72,10 +72,27 @@ jobs:
         run: |
           go run golang.org/x/vuln/cmd/govulncheck@latest ./pkg/...
 
+      # This fork is not in Grafana's catalogue, so the access policy issues a
+      # private signature, which is bound to the instances allowed to load the
+      # plugin. Without --rootUrls the signing service answers 409
+      # InvalidArgument, Field is required: rootUrls, so both inputs are
+      # checked before the call rather than after it. The token is a secret;
+      # the root URLs are not, and live in a repository variable so that this
+      # public workflow does not carry the list.
       - name: Sign plugin
-        run: yarn sign
+        run: |
+          if [ -z "$GRAFANA_ACCESS_POLICY_TOKEN" ]; then
+            printf "\033[0;31mGRAFANA_ACCESS_POLICY_TOKEN is not set. Add it as a repository secret.\033[0m\n"
+            exit 1
+          fi
+          if [ -z "$GRAFANA_PLUGIN_ROOT_URLS" ]; then
+            printf "\033[0;31mGRAFANA_PLUGIN_ROOT_URLS is not set. Add it as a repository variable, comma separated, each entry matching an instance root_url exactly.\033[0m\n"
+            exit 1
+          fi
+          yarn sign --rootUrls "$GRAFANA_PLUGIN_ROOT_URLS"
         env:
           GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }} # Requires a Grafana Access Policy token from Grafana.com.
+          GRAFANA_PLUGIN_ROOT_URLS: ${{ vars.GRAFANA_PLUGIN_ROOT_URLS }}
 
       - name: Get plugin metadata
         id: metadata
