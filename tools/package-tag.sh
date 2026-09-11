@@ -84,6 +84,29 @@ PY
   fi
 }
 
+# Signing needs both of its values before anything is built, not after: a
+# frontend build plus six backend targets takes minutes, and discovering a
+# missing variable at the end of that wastes all of them.
+check_signing_env() {
+  [ "${ALLOW_UNSIGNED:-0}" = "1" ] && return 0
+
+  [ -n "${GRAFANA_ACCESS_POLICY_TOKEN:-}" ] || die "GRAFANA_ACCESS_POLICY_TOKEN is not set.
+  Put it in the untracked env file, or pass ALLOW_UNSIGNED=1 to build an
+  unsigned artifact."
+
+  # This fork is not in Grafana's catalogue, so the access policy issues a
+  # private signature, and a private signature names the Grafana instances the
+  # plugin may run on. Without them the signing API answers
+  # 409 InvalidArgument "Field is required: rootUrls". They must match the
+  # root_url in each instance's grafana.ini, trailing slash included.
+  [ -n "${GRAFANA_PLUGIN_ROOT_URLS:-}" ] || die "GRAFANA_PLUGIN_ROOT_URLS is not set.
+  A private signature is bound to the Grafana instances that may load the
+  plugin. Add it beside the token, comma-separated, matching each instance's
+  root_url:
+      GRAFANA_PLUGIN_ROOT_URLS=\"https://grafana.example.com/\"
+  Or pass ALLOW_UNSIGNED=1 to build an unsigned artifact for local testing."
+}
+
 fork_tags() {
   local tag
   git for-each-ref --format='%(refname:short)' refs/tags | while read -r tag; do
@@ -141,20 +164,6 @@ package_tag() {
       echo "Grafana 12 refuses to load it unless grafana.ini sets:"
       echo "  allow_loading_unsigned_plugins = redis-datasource"
     else
-      [ -n "${GRAFANA_ACCESS_POLICY_TOKEN:-}" ] || die "GRAFANA_ACCESS_POLICY_TOKEN is not set.
-  Put it in .env, or pass ALLOW_UNSIGNED=1 to build an unsigned artifact."
-
-      # This fork is not in Grafana's catalogue, so the access policy issues a
-      # private signature, and a private signature names the Grafana instances
-      # the plugin may run on. Without them the signing API answers
-      # 409 InvalidArgument "Field is required: rootUrls". They must match the
-      # root_url in each instance's grafana.ini, trailing slash included.
-      [ -n "${GRAFANA_PLUGIN_ROOT_URLS:-}" ] || die "GRAFANA_PLUGIN_ROOT_URLS is not set.
-  A private signature is bound to the Grafana instances that may load the
-  plugin. Add to .env, comma-separated, matching each instance's root_url:
-      GRAFANA_PLUGIN_ROOT_URLS=\"https://grafana.example.com/\"
-  Or pass ALLOW_UNSIGNED=1 to build an unsigned artifact for local testing."
-
       # Signing runs on current Node regardless of the tag's own era: the
       # signer only reads dist/, so it is not bound to the build toolchain.
       use_node 24
@@ -182,6 +191,8 @@ if [ ${#TAGS[@]} -eq 0 ]; then
   [ ${#TAGS[@]} -gt 0 ] || die "No fork-authored tags found."
   say "Fork-authored tags: ${TAGS[*]}"
 fi
+
+check_signing_env
 
 for tag in "${TAGS[@]}"; do
   package_tag "$tag"
