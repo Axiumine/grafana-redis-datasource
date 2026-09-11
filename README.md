@@ -1,13 +1,16 @@
 # Redis Data Source for Grafana
 
-![Dashboard](https://raw.githubusercontent.com/RedisGrafana/grafana-redis-datasource/master/src/img/redis-dashboard.png)
+![Dashboard](https://raw.githubusercontent.com/Axiumine/grafana-redis-datasource/main/src/img/redis-dashboard.png)
 
-[![Grafana 12](https://img.shields.io/badge/Grafana-12-orange)](https://www.grafana.com)
-[![Redis Data Source](https://img.shields.io/badge/dynamic/json?color=blue&label=Redis%20Data%20Source&query=%24.version&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins%2Fredis-datasource)](https://grafana.com/grafana/plugins/redis-datasource)
-[![Redis Application plugin](https://img.shields.io/badge/dynamic/json?color=blue&label=Redis%20Application%20plugin&query=%24.version&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins%2Fredis-app)](https://grafana.com/grafana/plugins/redis-app)
-[![Redis Explorer plugin](https://img.shields.io/badge/dynamic/json?color=blue&label=Redis%20Explorer%20plugin&query=%24.version&url=https%3A%2F%2Fgrafana.com%2Fapi%2Fplugins%2Fredis-explorer-app)](https://grafana.com/grafana/plugins/redis-explorer-app)
-[![Go Report Card](https://goreportcard.com/badge/github.com/RedisGrafana/grafana-redis-datasource)](https://goreportcard.com/report/github.com/RedisGrafana/grafana-redis-datasource)
+[![Grafana 12.0.0+](https://img.shields.io/badge/Grafana-12.0.0%2B-orange)](https://grafana.com)
+[![License Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 [![CI](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/ci.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/ci.yml)
+[![Integration](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/integration.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/integration.yml)
+[![Qodana](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/qodana.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/qodana.yml)
+
+This fork is not in Grafana's plugin catalogue, so no catalogue badge describes it.
+The entry for [`redis-datasource`](https://grafana.com/grafana/plugins/redis-datasource)
+is upstream's plugin, and its version number says nothing about this build.
 
 > **This is a fork.**
 >
@@ -32,6 +35,9 @@
 > `group`, and have to be updated with it. Bugs in the fork belong in
 > [this repository's issues](https://github.com/Axiumine/grafana-redis-datasource/issues);
 > the links below point at upstream's, and describe upstream's catalogue build.
+>
+> Building, packaging, signing and installing this fork are documented in
+> [DEVELOPMENT.md](DEVELOPMENT.md), which also says where each step leaves its output.
 >
 > Built for [Axiumine/grafana-redis-dashboard](https://github.com/Axiumine/grafana-redis-dashboard).
 > Everything below this line is upstream's README, with one deletion: the demo
