@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `tools/package-tag.sh` now decides per tag whether an artifact can be signed, instead of treating signing as all-or-nothing for the whole run. grafana.com issues a signature only when the first segment of the plugin id names the organisation behind the access policy, so `v2.3.0`, whose tree still carries `redis-datasource`, cannot be signed under this one: a no-argument run — every fork-authored tag — died on it, and `ALLOW_UNSIGNED=1` was the only way past, which then stripped the signature from the tags that had earned one. Such a tag is now built unsigned, with the reason printed, and the signing variables are demanded only when the run will actually sign something. The organisation is derived from the id in the working tree rather than hardcoded, and `GRAFANA_PLUGIN_SIGNING_ORG` overrides it
+
 ## [3.0.0] - 2026-09-11
 
 ### Added

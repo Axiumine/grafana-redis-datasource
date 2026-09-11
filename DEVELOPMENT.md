@@ -128,7 +128,7 @@ The script adds a detached worktree at the tag, selects Node 16 for tags
 predating the `@grafana/create-plugin` migration and `.nvmrc` for the rest, runs
 `yarn build` and `mage -v buildAll`, signs `dist/`, renames `dist` to the plugin
 id read out of **that tag's** `src/plugin.json`, zips it and writes the `.md5`
-beside it. It refuses tags inherited from upstream, which are mirrored under
+beside it. Whether it signs is decided per tag, from that same id. It refuses tags inherited from upstream, which are mirrored under
 `refs/upstream-tags/`; packaging one would ship RedisGrafana's build under our
 name.
 
@@ -173,11 +173,23 @@ that says so is "Could not find root URL that matches running application URL".
 Adding an instance means adding it to the list and re-signing. The signature is
 a file inside the zip, so re-signing is a rebuild and nothing more.
 
-`ALLOW_UNSIGNED=1 ./tools/package-tag.sh vX.Y.Z` builds without signing. That is
-for local debugging and for `v2.3.0`, whose tree still carries the id
-`redis-datasource`: its first segment is not `axiumine`, so grafana.com will not
-sign it under this organisation's access policy. Treat such a build as an
-archive, not a release.
+A tag whose id cannot be signed is built unsigned without being asked to.
+grafana.com issues a signature only when the first segment of the plugin id
+names the organisation behind the access policy, so `v2.3.0`, whose tree still
+carries `redis-datasource`, is unsignable under this organisation and the script
+says so and carries on. It compares against the first segment of the id in the
+working tree — `axiumine` — rather than a hardcoded name, and
+`GRAFANA_PLUGIN_SIGNING_ORG` overrides that if the fork is ever signed by a
+second organisation. The same check decides the preflight: a run that will sign
+nothing does not demand the signing variables it would never use.
+
+Such a build is an archive, not a release. Grafana 12 loads it only where
+`grafana.ini` names it in `allow_loading_unsigned_plugins`.
+
+`ALLOW_UNSIGNED=1 ./tools/package-tag.sh vX.Y.Z` forces the same treatment on a
+tag that could have been signed. That is for local debugging, never for a
+release: passing it on a no-argument run strips the signature from every tag
+that had earned one.
 
 ## Verifying an artifact before it leaves the machine
 

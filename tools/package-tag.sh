@@ -23,6 +23,15 @@
 # produces an artifact Grafana 12 loads only when allow_loading_unsigned_plugins
 # names it — useful for local testing, never for a release.
 #
+# The one tag that cannot be signed at all is decided per tag rather than by the
+# flag. grafana.com issues a signature only when the first segment of the plugin
+# id names the organisation behind the access policy, and a tag whose tree
+# predates the 3.0.0 rename still carries upstream's `redis-datasource`. Asking
+# the signer for it fails, so such a tag is built unsigned and announced as an
+# archive. Without that, a no-argument run — every fork-authored tag — died on
+# the oldest one, and ALLOW_UNSIGNED=1 was the only way past it, which then
+# stripped the signature from the tags that had earned one.
+#
 # Nothing is pushed and no release is created. The artifacts land in artifacts/,
 # which is gitignored, for local testing.
 
@@ -107,6 +116,24 @@ check_signing_env() {
   Or pass ALLOW_UNSIGNED=1 to build an unsigned artifact for local testing."
 }
 
+# The organisation the access policy signs for, derived rather than hardcoded:
+# it is the first segment of the id the fork signs under today, which is the one
+# in the working tree's src/plugin.json. GRAFANA_PLUGIN_SIGNING_ORG overrides it
+# if the fork is ever signed by a second organisation.
+signing_org() {
+  local id
+  id=$(node -p "require('$REPO_ROOT/src/plugin.json').id")
+  printf '%s' "${GRAFANA_PLUGIN_SIGNING_ORG:-${id%%-*}}"
+}
+
+# The id a tag carries, read out of the tag's own tree without checking it out.
+# The preflight needs it before any worktree exists, to decide whether this run
+# will sign anything at all.
+tag_plugin_id() {
+  git show "$1:src/plugin.json" 2>/dev/null |
+    node -pe 'JSON.parse(require("fs").readFileSync(0, "utf8")).id' 2>/dev/null || true
+}
+
 fork_tags() {
   local tag
   git for-each-ref --format='%(refname:short)' refs/tags | while read -r tag; do
@@ -150,6 +177,16 @@ package_tag() {
   plugin_id=$(node -p "require('$work/src/plugin.json').id")
   [ -n "$plugin_id" ] || { cleanup_worktree; die "$tag has no id in src/plugin.json."; }
 
+  # Why this artifact will or will not carry a signature, decided once and
+  # reported verbatim below. An id whose first segment is not the signing
+  # organisation is unsignable by construction, not by choice.
+  local unsigned_reason=""
+  if [ "${ALLOW_UNSIGNED:-0}" = "1" ]; then
+    unsigned_reason="ALLOW_UNSIGNED=1 was passed"
+  elif [ "${plugin_id%%-*}" != "$SIGNING_ORG" ]; then
+    unsigned_reason="$tag carries the id $plugin_id, whose first segment is not $SIGNING_ORG, so grafana.com will not sign it under this access policy"
+  fi
+
   local node_version
   if [ -d "$work/.config" ]; then
     node_version=$(cat "$work/.nvmrc" 2>/dev/null || echo 24)
@@ -169,10 +206,11 @@ package_tag() {
     mage -v buildAll
 
     say "Signing"
-    if [ "${ALLOW_UNSIGNED:-0}" = "1" ]; then
-      echo "ALLOW_UNSIGNED=1 — producing an UNSIGNED artifact on purpose."
+    if [ -n "$unsigned_reason" ]; then
+      echo "UNSIGNED artifact, because $unsigned_reason."
       echo "Grafana 12 refuses to load it unless grafana.ini sets:"
       echo "  allow_loading_unsigned_plugins = $plugin_id"
+      echo "Treat it as an archive build, not a release."
     else
       # Signing runs on current Node regardless of the tag's own era: the
       # signer only reads dist/, so it is not bound to the build toolchain.
@@ -202,7 +240,25 @@ if [ ${#TAGS[@]} -eq 0 ]; then
   say "Fork-authored tags: ${TAGS[*]}"
 fi
 
-check_signing_env
+# Only demand the signing variables when this run will actually sign something.
+# Packaging v2.3.0 alone asks nothing of the access policy, so it must not fail
+# for want of a token it will never present.
+SIGNING_ORG=$(signing_org)
+[ -n "$SIGNING_ORG" ] || die "Could not read the signing organisation from src/plugin.json."
+
+WILL_SIGN=0
+for tag in "${TAGS[@]}"; do
+  id=$(tag_plugin_id "$tag")
+  if [ "${id%%-*}" = "$SIGNING_ORG" ]; then
+    WILL_SIGN=1
+  else
+    say "$tag carries ${id:-no readable id}; it will be packaged unsigned."
+  fi
+done
+
+if [ "$WILL_SIGN" = "1" ]; then
+  check_signing_env
+fi
 
 for tag in "${TAGS[@]}"; do
   package_tag "$tag"
