@@ -100,12 +100,18 @@ package_tag() {
   say "Packaging $tag"
   rm -rf "$work"
   git worktree add --detach "$work" "$tag" >/dev/null
-  # shellcheck disable=SC2064
-  trap "git worktree remove --force '$work' >/dev/null 2>&1 || true" RETURN
+
+  # The worktree is removed whatever happens next, including a failed build: a
+  # stray registered worktree outlives the run and confuses every later
+  # `git worktree list`.
+  cleanup_worktree() { git worktree remove --force "$work" >/dev/null 2>&1 || true; }
 
   local version
   version=$(node -p "require('$work/package.json').version")
-  [ "v$version" = "$tag" ] || die "$tag builds package.json version $version; they must match."
+  if [ "v$version" != "$tag" ]; then
+    cleanup_worktree
+    die "$tag builds package.json version $version; they must match."
+  fi
 
   local node_version
   if [ -d "$work/.config" ]; then
@@ -146,8 +152,9 @@ package_tag() {
 
     mkdir -p "$OUT_DIR"
     mv "redis-datasource-$version.zip" "redis-datasource-$version.zip.md5" "$OUT_DIR/"
-  )
+  ) || { cleanup_worktree; die "Build failed for $tag."; }
 
+  cleanup_worktree
   ls -l "$OUT_DIR/redis-datasource-$version.zip" "$OUT_DIR/redis-datasource-$version.zip.md5"
 }
 

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-11
+
 ### Added
 
 - Added an `aria-label` to the twelve `Select`, `TextArea` and `RadioButtonGroup` controls of the query editor. Every one of them sits beside a bare `InlineFormLabel`, which renders a `<label>` carrying no `htmlFor`, so none of them had an accessible name — neither for a screen reader nor for a test that addresses the rendered document rather than a component's props
@@ -14,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `yarn typecheck`, `yarn lint`, `yarn lint:fix` and `yarn test:ci` scripts. `yarn test` now watches only the files a local run has changed, and `yarn test:ci` is the single pass with coverage that the workflows call
 - Added a type check, a lint and a test step to all three workflows, which until now ran `yarn build` and nothing else
 - Added stubs for `IntersectionObserver` and `ResizeObserver` to `jest-setup.js`. jsdom implements neither, and `@grafana/ui` uses the first in the `ScrollContainer` that wraps every `Select` menu, so a test that opened a dropdown threw a `ReferenceError` before them
-- Added a Qodana workflow, `.github/workflows/qodana.yml`, with `qodana-go.yaml` and `qodana-js.yaml` beside it. One Qodana run analyses one linter image, so the Go backend and the TypeScript frontend get a job each, and each uploads its SARIF to GitHub code scanning under its own category. Neither `qodana-go` nor `qodana-js` has a Community edition — the free grant for open source covers only the JVM, Python, .NET, C++ and Android images — so both jobs skip themselves unless a `QODANA_TOKEN` secret is set, the way the Codecov step already does
+- Added a Qodana workflow, `.github/workflows/qodana.yml`, with `qodana-go.yaml` and `qodana-js.yaml` beside it. One Qodana run analyses one linter image, so the Go backend and the TypeScript frontend get a job each, and each uploads its SARIF to GitHub code scanning under its own category, on `always()` so that a failed gate still publishes the findings that explain it. Neither `qodana-go` nor `qodana-js` has a Community edition — the free grant for open source covers only the JVM, Python, .NET, C++ and Android images — so both jobs skip themselves unless a `QODANA_TOKEN` secret is set, the way the Codecov step already does
+- Both Qodana configurations run the `qodana.recommended` profile under an Ultimate Plus licence and declare a quality gate in `failureConditions`: no `CRITICAL` and no `HIGH` problems, and `testCoverageThresholds` of 100 for both `total` and `fresh`. Each `bootstrap` produces the coverage the gate reads — `go test -coverprofile=coverage/coverage.out` for the backend, `yarn test:ci` for the frontend — because Qodana locates coverage by filename and would not find the `coverage/backend.txt` that `mage cover` writes. The Ultimate Plus vulnerability checker and licence audit are both on, with `raiseLicenseProblems` promoting a licence violation to an inspection result so that it counts against the severity thresholds, `licenseRules` prohibiting the copyleft licences that Apache-2.0 redistribution cannot absorb, and `analyzeDevDependencies` widening the frontend scan to the build toolchain. Paths belonging to the other linter are excluded through the top-level `exclude` key with `name: All`, which is the form the CLI parses: `Profile` carries only `name` and `path`, so a `profile.inspections` list is read and then silently discarded
 - Added the Apache-2.0 section 4(b) change notice to the three workflows, the `Dockerfile` and `.gitignore`, which were modified without one, and the fork notice to `.githooks/commit-msg` and `.github/dependabot.yml`, which are ours
+- Added `.githooks/pre-commit`, which runs both Qodana linters over the working tree and refuses the commit when the quality gate fails. The gate is no `CRITICAL` and no `HIGH` problems, and 100% test coverage both overall and on changed lines. `SKIP_QODANA=1` bypasses it, `QODANA_LINTERS` narrows it to one linter, and a missing `QODANA_TOKEN` is a loud skip rather than a hard failure, so that a contributor without a licence is not locked out of committing; `QODANA_REQUIRED=1` turns that skip into a failure
+- Added `tools/package-tag.sh`, which builds, signs and packages a release artifact for one of this fork's own tags from that tag's own tree, reproducing what `.github/workflows/main.yml` does. A tag counts as ours when it has no counterpart under `refs/upstream-tags/`; the script refuses the inherited tags outright. It selects Node 16 for tags that predate the `@grafana/create-plugin` migration and the version in `.nvmrc` for the rest, falls back to a Python packer that preserves the executable bit when `zip` is absent, and writes to the ignored `artifacts/` directory without pushing anything
 
 ### Changed
 
@@ -52,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Raised the `go` directive in `go.mod` from `1.26.5` to `1.26.8` and dropped the now redundant `toolchain go1.26.8` line, so one version governs both the language floor and the build. A `toolchain` line is honoured by `GOTOOLCHAIN=auto` but ignored by `GOTOOLCHAIN=local`, which is the default in Debian's and Fedora's Go packages, and such a build would have compiled against the 1.26.5 standard library — [GO-2026-6090](https://pkg.go.dev/vuln/GO-2026-6090) in `crypto/tls` and [GO-2026-5972](https://pkg.go.dev/vuln/GO-2026-5972) in `encoding/asn1`. It now fails with `go.mod requires go >= 1.26.8` instead. `go.sum` and every dependency version are unchanged, and `govulncheck` and Trivy still report nothing against the binary
+- Added `.env` to `.gitignore`. The file holds `QODANA_TOKEN` and `GRAFANA_ACCESS_POLICY_TOKEN`, and this repository is public. It was already covered by a global `core.excludesFile`, which is not a safeguard the repository can rely on: a global ignore does not travel with a clone, so every other machine and every contributor had no protection at all. The rule now lives in the repository, alongside `.qodana/` and `qodana.sarif.json`
 
 ## [2.3.0] - 2026-09-10
 
@@ -378,7 +384,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supports RedisTimeSeries commands: TS.MRANGE, TS.RANGE.
 - Provides Redis monitoring dashboard.
 
-[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.3.0...main
+[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.0.0...main
+[3.0.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.1.2...v2.2.0
