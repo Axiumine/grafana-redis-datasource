@@ -29,6 +29,7 @@ export default defineConfig([
       '**/coverage',
       '**/dist/',
       '**/artifacts/',
+      '.qodana/',
       '**/work/',
       '**/ci/',
       'test-results/',

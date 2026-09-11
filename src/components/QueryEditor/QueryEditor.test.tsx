@@ -100,7 +100,7 @@ interface QueryFieldTest {
    * of its own options, so the first entry stands in for the value carried by the query and the
    * second for the value the test switches to.
    */
-  options?: Array<SelectableValue>;
+  options?: SelectableValue[];
 }
 
 /**
