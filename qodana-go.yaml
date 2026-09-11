@@ -54,6 +54,19 @@ exclude:
       - .config
       - coverage
 
+  # The Go image has no npm resolver, so it reads the frontend dependencies out
+  # of package.json without versions and matches each name against every
+  # advisory ever filed for it. eslint-config-prettier arrives as 0.0.0-ANY and
+  # lands on MAL-2025-6022 and the four MSC-2025 entries beside it, all of which
+  # cover the July 2025 compromise of 8.10.1, 9.1.1, 10.1.6 and 10.1.7. The
+  # lockfile pins 10.1.8, the release that fixed it and still the latest, and
+  # the frontend scan resolves that version and passes. Excluding the one
+  # inspection on the one file is narrower than lowering the CRITICAL threshold,
+  # and leaves the scan that can read the version in charge of the question.
+  - name: MaliciousLibrariesLocal
+    paths:
+      - package.json
+
   # main() is the process entry point: it calls datasource.Serve, which blocks
   # until Grafana shuts the plugin down, and then os.Exit. Neither can be driven
   # from a unit test, so the coverage inspection reports the file at 0% on every
@@ -117,19 +130,6 @@ exclude:
 # a report nobody gates on.
 raiseLicenseProblems: true
 enablePackageSearch: true
-
-# The Go image has no npm resolver, so it reads the frontend dependencies out of
-# package.json without versions and matches each of them against every advisory
-# ever filed for that name. eslint-config-prettier is reported as
-# 0.0.0-ANY and lands on MAL-2025-6022 and the four MSC-2025 entries beside it,
-# which cover the July 2025 compromise of 8.10.1, 9.1.1, 10.1.6 and 10.1.7. The
-# lockfile pins 10.1.8, the release that fixed it and still the latest, and the
-# frontend scan — which does resolve versions, and audits development
-# dependencies as well — passes the same package. Ignoring it here is narrower
-# than lowering the CRITICAL threshold, and leaves the check that can actually
-# read the version in charge of it.
-dependencyIgnores:
-  - name: eslint-config-prettier
 
 licenseRules:
   - keys:
