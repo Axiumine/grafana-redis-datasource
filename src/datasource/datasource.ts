@@ -149,8 +149,15 @@ export class DataSource extends DataSourceWithBackend<RedisQuery, RedisDataSourc
 
       /**
        * Get minimum Streaming Interval
+       *
+       * Only the streaming targets have a say. The interval is a streaming
+       * setting, and the query editor shows the field only when the switch is
+       * on, so a target with the switch off has never been asked for one and
+       * reads back as the 1000ms default. Taken over every target, as it was
+       * until 3.0.0, one such target pinned the whole panel to one tick a
+       * second however high its streaming sibling had been set.
        */
-      const streamingInterval = request.targets.map((target) =>
+      const streamingInterval = streaming.map((target) =>
         target.streamingInterval ? target.streamingInterval : DefaultStreamingInterval
       );
 

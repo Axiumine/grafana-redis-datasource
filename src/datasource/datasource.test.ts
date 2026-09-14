@@ -317,6 +317,31 @@ describe('DataSource', () => {
       expect(evicted.data[0].length).toEqual(1);
       expect(kept.data[0].length).toEqual(2);
     });
+
+    it('Should take the streaming interval from the streaming targets alone', () => {
+      const setIntervalSpy = jest.spyOn(global, 'setInterval');
+
+      /**
+       * A panel whose second target does not stream. That target carries no
+       * interval, because the query editor never offered it one, and taking it
+       * into account would hold the panel at the 1000ms default.
+       */
+      const subscription = dataSource
+        .query(
+          getRequest({
+            targets: [
+              streamingTarget({ streamingInterval: 60000 }),
+              { type: QueryTypeValue.CLI, refId: 'B', query: '' },
+            ],
+          })
+        )
+        .subscribe();
+
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 60000);
+
+      subscription.unsubscribe();
+      setIntervalSpy.mockRestore();
+    });
   });
 
   /**
