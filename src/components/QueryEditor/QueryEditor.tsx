@@ -790,7 +790,7 @@ export class QueryEditor extends PureComponent<Props> {
           <Switch
             label="Streaming"
             labelClass="width-8"
-            tooltip="If checked, the datasource polls on its own Interval and the dashboard refresh no longer drives this query."
+            tooltip="If checked, the datasource keeps a rolling series and polls on its own Interval, which the dashboard refresh no longer drives. Set Interval to 0 to be driven by the refresh again while keeping the series."
             checked={streaming || false}
             onChange={this.onStreamingChange}
           />
@@ -802,7 +802,7 @@ export class QueryEditor extends PureComponent<Props> {
                 type="number"
                 onChange={this.onStreamingIntervalChange}
                 label="Interval"
-                tooltip="How often this query is run while streaming, in milliseconds. Default is 1000ms. It replaces the dashboard refresh interval rather than following it. Where a panel has several streaming targets the smallest value wins."
+                tooltip="How often this query is run while streaming, in milliseconds. Default is 1000ms, and it replaces the dashboard refresh interval rather than following it. Set it to 0 to follow the dashboard refresh instead, one reading per refresh. Where a panel has several streaming targets the smallest value wins."
                 placeholder="1000"
               />
               <FormField

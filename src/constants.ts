@@ -5,6 +5,12 @@ import { SelectableValue } from '@grafana/data';
 
 /**
  * Default Streaming Interval
+ *
+ * Applies to a streaming target that carries no interval of its own. An
+ * interval of zero is not this default but a setting in its own right: it
+ * starts no timer, so the query runs once per subscription, and since Grafana
+ * resubscribes on every dashboard refresh the panel then advances at whatever
+ * the refresh picker is set to while still accumulating a series.
  */
 export const DefaultStreamingInterval = 1000;
 

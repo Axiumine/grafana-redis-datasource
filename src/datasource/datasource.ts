@@ -157,9 +157,13 @@ export class DataSource extends DataSourceWithBackend<RedisQuery, RedisDataSourc
        * until 3.0.0, one such target pinned the whole panel to one tick a
        * second however high its streaming sibling had been set.
        */
-      const streamingInterval = streaming.map((target) =>
-        target.streamingInterval ? target.streamingInterval : DefaultStreamingInterval
-      );
+      const streamingInterval = streaming
+        .map((target) =>
+          target.streamingInterval === undefined || target.streamingInterval === null
+            ? DefaultStreamingInterval
+            : target.streamingInterval
+        )
+        .filter((interval) => interval > 0);
 
       /**
        * One reading
@@ -201,7 +205,20 @@ export class DataSource extends DataSourceWithBackend<RedisQuery, RedisDataSourc
        * at once instead of an interval later.
        */
       void tick();
-      const intervalId = setInterval(tick, Math.min(...streamingInterval));
+
+      /**
+       * An interval of zero follows the dashboard refresh instead
+       *
+       * Grafana re-runs a panel's query on every refresh, which unsubscribes and
+       * subscribes again, so a subscription that reads once and starts no timer
+       * reads exactly once per refresh. The buffer is kept across that gap, so
+       * the panel still accumulates history the way a streaming panel does —
+       * which is the part a target with streaming switched off cannot give,
+       * since a reply carrying one sample and no time field is not a series.
+       * With the refresh picker off nothing resubscribes and the panel holds
+       * still, which is what the picker being off means.
+       */
+      const intervalId = streamingInterval.length ? setInterval(tick, Math.min(...streamingInterval)) : undefined;
 
       return () => {
         clearInterval(intervalId);

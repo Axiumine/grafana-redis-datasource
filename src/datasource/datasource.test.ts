@@ -334,6 +334,52 @@ describe('DataSource', () => {
       expect(reading.data[0].length).toEqual(1);
     });
 
+    it('Should start no timer when the interval is zero, so the dashboard refresh drives it', async () => {
+      const setIntervalSpy = jest.spyOn(global, 'setInterval');
+
+      /**
+       * Grafana resubscribes on every refresh, so a subscription that reads once
+       * and starts no timer reads exactly once per refresh. Two subscriptions
+       * stand in for two refreshes here, and the series continues across them.
+       */
+      const first = await streamOnce({
+        dashboardUID: 'dashboard',
+        panelId: 3,
+        targets: [streamingTarget({ streamingInterval: 0 })],
+      });
+      const second = await streamOnce({
+        dashboardUID: 'dashboard',
+        panelId: 3,
+        targets: [streamingTarget({ streamingInterval: 0 })],
+      });
+
+      expect(setIntervalSpy).not.toHaveBeenCalled();
+      expect(first.data[0].length).toEqual(1);
+      expect(second.data[0].length).toEqual(2);
+
+      setIntervalSpy.mockRestore();
+    });
+
+    it('Should keep the timer when only one of several streaming targets is zero', () => {
+      const setIntervalSpy = jest.spyOn(global, 'setInterval');
+
+      const subscription = dataSource
+        .query(
+          getRequest({
+            targets: [
+              streamingTarget({ streamingInterval: 0 }),
+              streamingTarget({ refId: 'B', streamingInterval: 4000 }),
+            ],
+          })
+        )
+        .subscribe();
+
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 4000);
+
+      subscription.unsubscribe();
+      setIntervalSpy.mockRestore();
+    });
+
     it('Should take the streaming interval from the streaming targets alone', () => {
       const setIntervalSpy = jest.spyOn(global, 'setInterval');
 
