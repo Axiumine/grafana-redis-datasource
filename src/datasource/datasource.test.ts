@@ -318,6 +318,22 @@ describe('DataSource', () => {
       expect(kept.data[0].length).toEqual(2);
     });
 
+    it('Should read on subscription rather than waiting out the first interval', async () => {
+      /**
+       * A refresh clears the timer and starts it from zero, so an interval
+       * longer than the refresh period never reached its deadline and the panel
+       * drew nothing at all. Jest's own timeout is what asserts it here: a
+       * reading that waited for this interval could not arrive in time.
+       */
+      const reading = await streamOnce({
+        dashboardUID: 'dashboard',
+        panelId: 2,
+        targets: [streamingTarget({ streamingInterval: 60000 })],
+      });
+
+      expect(reading.data[0].length).toEqual(1);
+    });
+
     it('Should take the streaming interval from the streaming targets alone', () => {
       const setIntervalSpy = jest.spyOn(global, 'setInterval');
 

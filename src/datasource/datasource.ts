@@ -162,33 +162,46 @@ export class DataSource extends DataSourceWithBackend<RedisQuery, RedisDataSourc
       );
 
       /**
-       * Interval
+       * One reading
        */
-      const intervalId = setInterval(
-        async () => {
-          const response = await lastValueFrom(super.query(request));
+      const tick = async () => {
+        const response = await lastValueFrom(super.query(request));
 
-          /**
-           * Every frame is updated concurrently, as it was before, but the promises
-           * are awaited rather than dropped on the floor: an update that rejects
-           * used to become an unhandled rejection with nothing to attribute it to.
-           */
-          await Promise.all(
-            response.data.map(async (frame) => {
-              if (frames[frame.refId]) {
-                frame = await frames[frame.refId].update(frame.fields);
-              }
+        /**
+         * Every frame is updated concurrently, as it was before, but the promises
+         * are awaited rather than dropped on the floor: an update that rejects
+         * used to become an unhandled rejection with nothing to attribute it to.
+         */
+        await Promise.all(
+          response.data.map(async (frame) => {
+            if (frames[frame.refId]) {
+              frame = await frames[frame.refId].update(frame.fields);
+            }
 
-              subscriber.next({
-                data: [frame],
-                key: frame.refId,
-                state: LoadingState.Streaming,
-              });
-            })
-          );
-        },
-        Math.min(...streamingInterval)
-      );
+            subscriber.next({
+              data: [frame],
+              key: frame.refId,
+              state: LoadingState.Streaming,
+            });
+          })
+        );
+      };
+
+      /**
+       * Read on subscription, then on the interval
+       *
+       * Waiting a whole interval for the first reading left the panel empty for
+       * that long, and a dashboard refresh made it permanent. A refresh
+       * unsubscribes and subscribes again, which clears the timer and starts it
+       * from zero, so an interval longer than the refresh period never reached
+       * its deadline: measured against Grafana 13.2.1, a panel streaming at
+       * 15000ms under a 10s refresh issued no query at all, and a shorter
+       * interval still lost whatever part of a cycle the refresh cut off.
+       * Reading on subscription costs the refresh nothing and fills the panel
+       * at once instead of an interval later.
+       */
+      void tick();
+      const intervalId = setInterval(tick, Math.min(...streamingInterval));
 
       return () => {
         clearInterval(intervalId);
