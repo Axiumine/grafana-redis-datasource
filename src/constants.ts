@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 import { SelectableValue } from '@grafana/data';
 
 /**
@@ -9,6 +12,16 @@ export const DefaultStreamingInterval = 1000;
  * Default Streaming Capacity
  */
 export const DefaultStreamingCapacity = 1000;
+
+/**
+ * Streaming Buffer Limit
+ *
+ * How many streaming series the data source keeps alive across a refresh. Each
+ * entry is one panel query's circular buffer, so the limit bounds what a long
+ * browsing session can accumulate; the least recently used entry is dropped once
+ * it is reached, and a dropped series simply starts over.
+ */
+export const StreamingBufferLimit = 100;
 
 /**
  * Client Type Values

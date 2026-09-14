@@ -1,7 +1,7 @@
 // Modified in 2026 by Axiumine, from the original in
 // RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
 
-import { Observable } from 'rxjs';
+import { lastValueFrom, Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import {
   CircularDataFrame,
@@ -14,7 +14,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend, setTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { ClientTypeValue, StreamingDataType } from '../constants';
+import { ClientTypeValue, StreamingBufferLimit, StreamingDataType } from '../constants';
 import { QueryTypeValue, RedisQuery } from '../redis';
 import { getQuery } from '../tests/utils';
 import { TimeFieldName } from '../time-series';
@@ -223,6 +223,99 @@ describe('DataSource', () => {
             done();
           }
         );
+    });
+
+    /**
+     * One streaming reading, taken and unsubscribed as a refresh would
+     */
+    const streamOnce = (overrideRequest: OverrideRequest) =>
+      lastValueFrom(dataSource.query(getRequest(overrideRequest)).pipe(take(1)));
+
+    /**
+     * Streaming target
+     */
+    const streamingTarget = (overrideTarget: Partial<RedisQuery> = {}): RedisQuery => ({
+      type: QueryTypeValue.CLI,
+      refId: 'A',
+      query: '',
+      streaming: true,
+      streamingCapacity: 100,
+      streamingInterval: 1,
+      ...overrideTarget,
+    });
+
+    it('Should continue a series across the re-subscription a dashboard refresh makes', (done) => {
+      const target = streamingTarget();
+      const lengths: number[] = [];
+
+      /**
+       * A refresh tears the subscription down and issues the same query again as
+       * a new request, so the series has to survive the gap between the two.
+       */
+      dataSource
+        .query(getRequest({ dashboardUID: 'dashboard', panelId: 1, targets: [target] }))
+        .pipe(take(3))
+        .subscribe({
+          next: (value) => lengths.push(value.data[0].length),
+          complete: () => {
+            dataSource
+              .query(getRequest({ dashboardUID: 'dashboard', panelId: 1, targets: [target] }))
+              .pipe(take(1))
+              .subscribe({
+                next: (value) => lengths.push(value.data[0].length),
+                complete: () => {
+                  expect(lengths).toEqual([1, 2, 3, 4]);
+                  done();
+                },
+              });
+          },
+        });
+    });
+
+    it('Should start a new series when the interpolated query changes', async () => {
+      const first = await streamOnce({
+        dashboardUID: 'dashboard',
+        panelId: 1,
+        targets: [streamingTarget({ query: 'INFO' })],
+      });
+      const second = await streamOnce({
+        dashboardUID: 'dashboard',
+        panelId: 1,
+        targets: [streamingTarget({ query: 'INFO' })],
+      });
+      const edited = await streamOnce({
+        dashboardUID: 'dashboard',
+        panelId: 1,
+        targets: [streamingTarget({ query: 'DBSIZE' })],
+      });
+
+      /**
+       * The same query continues, the edited one is a series of its own
+       */
+      expect(first.data[0].length).toEqual(1);
+      expect(second.data[0].length).toEqual(2);
+      expect(edited.data[0].length).toEqual(1);
+    });
+
+    it('Should drop the least recently used series once the buffer limit is reached', async () => {
+      await streamOnce({ dashboardUID: 'dashboard', panelId: 0, targets: [streamingTarget()] });
+
+      /**
+       * Fill the cache past its limit, so that panel 0, the oldest, is evicted
+       */
+      for (let panelId = 1; panelId <= StreamingBufferLimit; panelId++) {
+        await streamOnce({ dashboardUID: 'dashboard', panelId, targets: [streamingTarget()] });
+      }
+
+      const evicted = await streamOnce({ dashboardUID: 'dashboard', panelId: 0, targets: [streamingTarget()] });
+      const kept = await streamOnce({
+        dashboardUID: 'dashboard',
+        panelId: StreamingBufferLimit,
+        targets: [streamingTarget()],
+      });
+
+      expect(evicted.data[0].length).toEqual(1);
+      expect(kept.data[0].length).toEqual(2);
     });
   });
 
