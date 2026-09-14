@@ -3,7 +3,7 @@
 ![Dashboard](https://raw.githubusercontent.com/Axiumine/grafana-redis-datasource/main/src/img/redis-dashboard.png)
 
 [![Grafana 12.0.0+](https://img.shields.io/badge/Grafana-12.0.0%2B-orange)](https://grafana.com)
-[![License Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
+[![License Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue)](https://github.com/Axiumine/grafana-redis-datasource/blob/main/LICENSE)
 [![CI](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/ci.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/ci.yml)
 [![Integration](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/integration.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/integration.yml)
 [![Qodana](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/qodana.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/qodana.yml)
@@ -25,8 +25,8 @@ is upstream's plugin, and its version number says nothing about this build.
 > listed further down are upstream's, and describe its own 2.X and 1.X releases
 > rather than this fork.
 >
-> See [CHANGELOG.md](CHANGELOG.md) entries **2.3.0** and **3.0.0** for the full list,
-> and [NOTICE](NOTICE) for attribution. The plugin id is `axiumine-redis-datasource`
+> See [CHANGELOG.md](https://github.com/Axiumine/grafana-redis-datasource/blob/main/CHANGELOG.md) entries **2.3.0** and **3.0.0** for the full list,
+> and [NOTICE](https://github.com/Axiumine/grafana-redis-datasource/blob/main/NOTICE) for attribution. The plugin id is `axiumine-redis-datasource`
 > as of 3.0.0; up to 2.3.0 it was upstream's `redis-datasource`, and installing this
 > build no longer replaces the catalogue one in place. Grafana ties both signing and
 > catalogue publication to an id whose first segment is the publishing organisation,
@@ -37,7 +37,7 @@ is upstream's plugin, and its version number says nothing about this build.
 > the links below point at upstream's, and describe upstream's catalogue build.
 >
 > Building, packaging, signing and installing this fork are documented in
-> [DEVELOPMENT.md](DEVELOPMENT.md), which also says where each step leaves its output.
+> [DEVELOPMENT.md](https://github.com/Axiumine/grafana-redis-datasource/blob/main/DEVELOPMENT.md), which also says where each step leaves its output.
 >
 > Built for [Axiumine/grafana-redis-dashboard](https://github.com/Axiumine/grafana-redis-dashboard).
 > Everything below this line is upstream's README, with one deletion: the demo

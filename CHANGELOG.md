@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `README.md` linked to `LICENSE`, `CHANGELOG.md`, `NOTICE` and `DEVELOPMENT.md` by relative path. Grafana's `plugincheck2` rejects those: the catalogue renders the README away from the repository, where a relative link resolves against grafana.com and leads nowhere. All four now point at the file on `main` by absolute URL
+
 ## [3.0.0] - 2026-09-11
 
 ### Added
