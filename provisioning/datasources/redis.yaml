@@ -3,8 +3,17 @@
 
 apiVersion: 1
 
-datasources:
+# Grafana lists a datasource by the name given here, so an instance holding this
+# fork and the catalogue build showed two entries called Redis with nothing to
+# separate them, exactly as the plugin card did. deleteDatasources removes the one
+# provisioned under the old name, so a stack that already ran this file is renamed
+# rather than left with both.
+deleteDatasources:
   - name: Redis
+    orgId: 1
+
+datasources:
+  - name: Redis (Axiumine)
     type: axiumine-redis-datasource
     access: proxy
     isDefault: true
