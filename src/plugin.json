@@ -24,7 +24,7 @@
       "name": "Axiumine",
       "url": "https://github.com/Axiumine"
     },
-    "description": "Allows to connect to any Redis database On-Premises and in the Cloud.",
+    "description": "Axiumine's fork of the Redis datasource. Connects to any Redis database on-premises and in the cloud, on Grafana 12 and 13.",
     "keywords": ["redis", "timeseries", "backend", "plugin"],
     "links": [
       {
@@ -70,7 +70,7 @@
     "version": "%VERSION%"
   },
   "metrics": true,
-  "name": "Redis",
+  "name": "Redis (Axiumine)",
   "streaming": true,
   "type": "datasource"
 }
