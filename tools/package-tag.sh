@@ -223,14 +223,21 @@ package_tag() {
     say "Packaging"
     mv dist "$plugin_id"
     make_zip "$plugin_id-$version.zip" "$plugin_id"
+    # Two checksums, because two audiences read them. The .md5 is what the
+    # Release workflow has always written beside the zip, and what a manual
+    # upload is checked against. The .sha1 is what grafana.com's plugin
+    # submission form asks for, and it asks for that one only.
     md5sum "$plugin_id-$version.zip" > "$plugin_id-$version.zip.md5"
+    sha1sum "$plugin_id-$version.zip" > "$plugin_id-$version.zip.sha1"
 
     mkdir -p "$OUT_DIR"
-    mv "$plugin_id-$version.zip" "$plugin_id-$version.zip.md5" "$OUT_DIR/"
+    mv "$plugin_id-$version.zip" "$plugin_id-$version.zip.md5" \
+      "$plugin_id-$version.zip.sha1" "$OUT_DIR/"
   ) || { cleanup_worktree; die "Build failed for $tag."; }
 
   cleanup_worktree
-  ls -l "$OUT_DIR/$plugin_id-$version.zip" "$OUT_DIR/$plugin_id-$version.zip.md5"
+  ls -l "$OUT_DIR/$plugin_id-$version.zip" "$OUT_DIR/$plugin_id-$version.zip.md5" \
+    "$OUT_DIR/$plugin_id-$version.zip.sha1"
 }
 
 TAGS=("$@")

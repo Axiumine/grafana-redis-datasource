@@ -34,7 +34,7 @@ git config core.hooksPath .githooks
 | -------------------------- | -------------------------------------------------------------------------------------------------------------- | ------- |
 | `dist/`                    | the unpacked plugin: frontend bundle, `plugin.json` with `%VERSION%` substituted, and the six backend binaries | no      |
 | `dist/MANIFEST.txt`        | the signature, written by `sign-plugin` and present only after a signing step                                  | no      |
-| `artifacts/`               | release zips and their `.md5` files, one pair per packaged tag                                                 | no      |
+| `artifacts/`               | release zips and their `.md5` and `.sha1` files, one set per packaged tag                                      | no      |
 | `artifacts/extracted/`     | an unpacked artifact, which `docker-compose/signed.yml` mounts                                                 | no      |
 | `.qodana/go`, `.qodana/js` | linter results and logs from a local Qodana run                                                                | no      |
 
@@ -128,14 +128,22 @@ The script adds a detached worktree at the tag, selects Node 16 for tags
 predating the `@grafana/create-plugin` migration and `.nvmrc` for the rest, runs
 `yarn build` and `mage -v buildAll`, signs `dist/`, renames `dist` to the plugin
 id read out of **that tag's** `src/plugin.json`, zips it and writes the `.md5`
-beside it. Whether it signs is decided per tag, from that same id. It refuses tags inherited from upstream, which are mirrored under
+and the `.sha1` beside it. Whether it signs is decided per tag, from that same
+id. It refuses tags inherited from upstream, which are mirrored under
 `refs/upstream-tags/`; packaging one would ship RedisGrafana's build under our
 name.
 
 The result is `artifacts/<plugin id>-<version>.zip` plus
-`artifacts/<plugin id>-<version>.zip.md5`, and because the id comes from the
+`artifacts/<plugin id>-<version>.zip.md5` and
+`artifacts/<plugin id>-<version>.zip.sha1`, and because the id comes from the
 tag, `v3.0.0` produces `axiumine-redis-datasource-3.0.0.zip` while `v2.3.0`
 produces `redis-datasource-2.3.0.zip`.
+
+Two checksums, because two audiences read them. The `.md5` is what the Release
+workflow has always written beside the zip and what a manual upload is checked
+against. The `.sha1` is what grafana.com's plugin submission form asks for, and
+it asks for that one only, so a submission would otherwise mean computing it by
+hand from a downloaded artifact. The Release workflow writes and uploads both.
 
 The script pushes nothing and creates no release. Publishing is a deliberate
 second step.
@@ -255,4 +263,4 @@ rename bought.
 3. `./tools/package-tag.sh vX.Y.Z`.
 4. Install the artifact and exercise it, as above.
 5. Only then publish, either by pushing the tag so the Release workflow picks it
-   up or by uploading the zip and its `.md5` by hand.
+   up or by uploading the zip and its two checksums by hand.

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a `.sha1` beside the release zip, written by both `tools/package-tag.sh` and the Release workflow and uploaded with the other assets. grafana.com's plugin submission form asks for a SHA1 of the archive and for no other checksum, so a submission previously meant downloading the published artifact and computing one by hand. The `.md5` stays: it is what a manual upload has always been checked against
+
 ## [3.0.0] - 2026-09-11
 
 ### Added

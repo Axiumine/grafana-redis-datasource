@@ -104,6 +104,7 @@ jobs:
           export GRAFANA_PLUGIN_TYPE=$(cat dist/plugin.json | jq -r .type)
           export GRAFANA_PLUGIN_ARTIFACT=${GRAFANA_PLUGIN_ID}-${GRAFANA_PLUGIN_VERSION}.zip
           export GRAFANA_PLUGIN_ARTIFACT_CHECKSUM=${GRAFANA_PLUGIN_ARTIFACT}.md5
+          export GRAFANA_PLUGIN_ARTIFACT_SHA1=${GRAFANA_PLUGIN_ARTIFACT}.sha1
 
           {
             echo "plugin-id=${GRAFANA_PLUGIN_ID}"
@@ -111,6 +112,7 @@ jobs:
             echo "plugin-type=${GRAFANA_PLUGIN_TYPE}"
             echo "archive=${GRAFANA_PLUGIN_ARTIFACT}"
             echo "archive-checksum=${GRAFANA_PLUGIN_ARTIFACT_CHECKSUM}"
+            echo "archive-sha1=${GRAFANA_PLUGIN_ARTIFACT_SHA1}"
             echo "github-tag=${GITHUB_REF#refs/*/}"
           } >> "$GITHUB_OUTPUT"
 
@@ -137,7 +139,9 @@ jobs:
           mv dist ${{ steps.metadata.outputs.plugin-id }}
           zip ${{ steps.metadata.outputs.archive }} ${{ steps.metadata.outputs.plugin-id }} -r
           md5sum ${{ steps.metadata.outputs.archive }} > ${{ steps.metadata.outputs.archive-checksum }}
+          sha1sum ${{ steps.metadata.outputs.archive }} > ${{ steps.metadata.outputs.archive-sha1 }}
           echo "checksum=$(cut -d' ' -f1 < ./${{ steps.metadata.outputs.archive-checksum }})" >> "$GITHUB_OUTPUT"
+          echo "sha1=$(cut -d' ' -f1 < ./${{ steps.metadata.outputs.archive-sha1 }})" >> "$GITHUB_OUTPUT"
 
       - name: Lint plugin
         continue-on-error: true
@@ -157,3 +161,4 @@ jobs:
           files: |
             ./${{ steps.metadata.outputs.archive }}
             ./${{ steps.metadata.outputs.archive-checksum }}
+            ./${{ steps.metadata.outputs.archive-sha1 }}
