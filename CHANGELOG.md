@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-23
+
 ### Added
 
 - Added a `.sha1` beside the release zip, written by both `tools/package-tag.sh` and the Release workflow and uploaded with the other assets. grafana.com's plugin submission form asks for a SHA1 of the archive and for no other checksum, so a submission previously meant downloading the published artifact and computing one by hand. The `.md5` stays: it is what a manual upload has always been checked against
@@ -433,7 +435,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supports RedisTimeSeries commands: TS.MRANGE, TS.RANGE.
 - Provides Redis monitoring dashboard.
 
-[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.0.0...main
+[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.1.0...main
+[3.1.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.2.0...v2.2.1
