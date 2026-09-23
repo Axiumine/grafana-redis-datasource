@@ -67,7 +67,7 @@ exclude:
     paths:
       - package.json
 
-  # main() is the process entry point: it calls datasource.Serve, which blocks
+  # main() is the process entry point: it calls backend.Manage, which blocks
   # until Grafana shuts the plugin down, and then os.Exit. Neither can be driven
   # from a unit test, so the coverage inspection reports the file at 0% on every
   # run. The number is honest and the gate below already accounts for it; what
@@ -131,14 +131,34 @@ exclude:
 raiseLicenseProblems: true
 enablePackageSearch: true
 
+# CC0-1.0 is a public-domain dedication and constrains no Apache-2.0
+# redistribution, the same judgement qodana-js.yaml records. It reaches this tree
+# through github.com/zeebo/assert, which only the tests of github.com/zeebo/xxh3
+# import; nothing under it is compiled into the plugin.
 licenseRules:
   - keys:
       - Apache-2.0
+    allowed:
+      - CC0-1.0
     prohibited:
       - GPL-2.0
       - GPL-3.0
       - AGPL-3.0
       - SSPL-1.0
+
+# The licence audit cannot detect this module's licence, because it is generated
+# by the Buf Schema Registry rather than published from a repository the package
+# search indexes. Its own LICENSE file is Apache-2.0, read from the module cache,
+# and `go mod why` reports that the main module does not need it at all: it sits
+# in the module graph only as a requirement of a dependency. The override names
+# the exact version, so a bump has to be checked again rather than inheriting it.
+dependencyOverrides:
+  - name: buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go
+    version: v1.36.6-20250425153114-8976f5be98c1.1
+    url: https://buf.build/bufbuild/protovalidate
+    licenses:
+      - key: Apache-2.0
+        url: https://www.apache.org/licenses/LICENSE-2.0
 
 failureConditions:
   severityThresholds:

@@ -20,15 +20,14 @@ import (
 /**
  * The function is called when the instance is created for the first time or when a datasource configuration changed.
  */
-func newDatasource() datasource.ServeOpts {
+func newDatasource() backend.ServeOpts {
 	im := datasource.NewInstanceManager(newDataSourceInstance)
 
 	ds := &redisDatasource{
 		im: im,
 	}
 
-	// Returns datasource.ServeOpts
-	return datasource.ServeOpts{
+	return backend.ServeOpts{
 		QueryDataHandler:   ds,
 		CheckHealthHandler: ds,
 	}
