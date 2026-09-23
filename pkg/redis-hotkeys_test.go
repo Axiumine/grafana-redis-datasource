@@ -92,6 +92,31 @@ func TestQueryHotkeysGet(t *testing.T) {
 		require.Equal(t, int64(0), response.Frames[0].Fields[0].At(0))
 	})
 
+	t.Run("should read the map inside the array Redis 8.10 wraps it in", func(t *testing.T) {
+		t.Parallel()
+
+		client := testClient{rcv: []interface{}{fullHotkeysReply()}}
+		response := queryHotkeysGet(queryModel{}, &client)
+
+		require.NoError(t, response.Error)
+		require.Len(t, response.Frames, 2)
+		require.Len(t, response.Frames[0].Fields, 4)
+		require.Equal(t, int64(1), response.Frames[0].Fields[0].At(0))
+		require.Equal(t, 3, response.Frames[1].Fields[0].Len())
+	})
+
+	t.Run("should treat the null reply of a reset tracker as never started", func(t *testing.T) {
+		t.Parallel()
+
+		// radix decodes a RESP null into an empty []byte, not into nil
+		client := testClient{rcv: []byte{}}
+		response := queryHotkeysGet(queryModel{}, &client)
+
+		require.NoError(t, response.Error)
+		require.Len(t, response.Frames, 1)
+		require.Equal(t, int64(0), response.Frames[0].Fields[0].At(0))
+	})
+
 	t.Run("should reject a reply that is not a map", func(t *testing.T) {
 		t.Parallel()
 

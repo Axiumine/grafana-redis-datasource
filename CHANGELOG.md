@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Pinned Grafana to `13.2.2` in `docker-compose.yml`, `docker-compose/dev.yml` and `docker-compose/signed.yml`, which pulled `latest` before. Docker resolves `latest` once and keeps whatever it pulled, so a machine that had fetched it earlier went on testing an older release while believing it tested the current one; this one was still on `13.2.1`. `docker-compose/master.yml` stays on `master` by design, and `.config/docker-compose-base.yaml` is scaffolded and already takes `GRAFANA_VERSION`
-
 ## [3.1.0] - 2026-09-23
 
 ### Added
@@ -18,11 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a `.sha1` beside the release zip, written by both `tools/package-tag.sh` and the Release workflow and uploaded with the other assets. grafana.com's plugin submission form asks for a SHA1 of the archive and for no other checksum, so a submission previously meant downloading the published artifact and computing one by hand. The `.md5` stays: it is what a manual upload has always been checked against
 - Added a `Validate plugin` step to CI, which runs `@grafana/plugin-validator` on an unsigned archive of each build with the source tree beside it. That is the check the catalogue runs on a submission, and the source tree is what lets its osv-scanner read `yarn.lock` and `go.mod`. Nothing the fork ran before looked at the lockfile's transitive dependencies: `govulncheck` and Trivy see the Go backend only, and Qodana's `VulnerableLibrariesLocal` judges only what `package.json` declares, so a high-severity advisory reached through `copy-webpack-plugin` passed every gate. A raw osv-scanner run was not used instead, because it also reports the packages `@grafana/ui`, `@grafana/data` and `@grafana/runtime` pull in, which Grafana supplies at runtime and which never reach `dist/`
 
+### Changed
+
+- Pinned Grafana to `13.2.2` in `docker-compose.yml`, `docker-compose/dev.yml` and `docker-compose/signed.yml`, which pulled `latest` before. Docker resolves `latest` once and keeps whatever it pulled, so a machine that had fetched it earlier went on testing an older release while believing it tested the current one; this one was still on `13.2.1`. `docker-compose/master.yml` stays on `master` by design, and `.config/docker-compose-base.yaml` is scaffolded and already takes `GRAFANA_VERSION`
+
 ### Fixed
 
 - The Release workflow ran the plugin validator as a report rather than a gate. The step carried `continue-on-error: true`, and it passed the archive without `-sourceCodeUri`, so the validator never read `yarn.lock` and its osv-scanner did not run at all; on `v3.0.0` it printed only the private-signature warning. It now runs the published `@grafana/plugin-validator` with the source tree and fails the release on any error
 - `tools/package-tag.sh` packaged the backend binaries with whatever mode the caller's umask gave them, and a umask of `002` leaves them `0775`. The catalogue's validator accepts exactly `0755` and rejects the archive otherwise, so the local `v3.0.0` artifact could not have been submitted, while the workflow build, made under a runner's `022`, could. The script now sets `0755` on the binaries before signing
 - `tools/package-tag.sh` ignored every failed command in its build. The build ran in a subshell followed by `|| die`, and bash switches errexit off inside the left operand of `||`, so a missing `mage` let the run go on to sign and package an archive with no backend in it. The status is now taken without `||`, the subshell turns errexit back on, the script refuses to start without `mage` on `PATH`, and it stops when `mage` writes no Linux binary
+- `HOTKEYS GET` returned no hot keys against Redis 8.10.1, and an error rather than an inactive tracker once tracking was reset. The server wraps the reply map in a one-element array, which the parser read as a map with no entries, and it answers a reset tracker with a null reply, which radix decodes into an empty `[]byte` rather than `nil`, so the check for a tracker that never started missed it and _unexpected HOTKEYS GET reply_ was reported instead. Both shapes are now recognised, and the flat map the tests were written against is still read the same way
 
 ### Security
 

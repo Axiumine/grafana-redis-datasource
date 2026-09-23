@@ -39,7 +39,12 @@ func queryHotkeysGet(_ queryModel, client redisClient) backend.DataResponse {
 		return errorHandler(response, err)
 	}
 
-	// Tracking was never started
+	// Tracking was never started, or was reset. Redis answers with a null
+	// reply, which radix decodes into an empty []byte rather than nil.
+	if reply, ok := result.([]byte); ok && len(reply) == 0 {
+		result = nil
+	}
+
 	if result == nil {
 		response.Frames = append(response.Frames, data.NewFrame("summary",
 			data.NewField("tracking-active", nil, []int64{0})))
@@ -50,6 +55,14 @@ func queryHotkeysGet(_ queryModel, client redisClient) backend.DataResponse {
 	if !ok {
 		response.Error = errUnexpectedHotkeysReply
 		return response
+	}
+
+	// Redis 8.10 wraps the map in a one-element array. The flat form is still
+	// accepted, so a server that answers with the map itself reads the same.
+	if len(elements) == 1 {
+		if inner, ok := elements[0].([]interface{}); ok {
+			elements = inner
+		}
 	}
 
 	summary := data.NewFrame("summary")
