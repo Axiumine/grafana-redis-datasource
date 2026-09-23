@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pinned Grafana to `13.2.2` in `docker-compose.yml`, `docker-compose/dev.yml` and `docker-compose/signed.yml`, which pulled `latest` before. Docker resolves `latest` once and keeps whatever it pulled, so a machine that had fetched it earlier went on testing an older release while believing it tested the current one; this one was still on `13.2.1`. `docker-compose/master.yml` stays on `master` by design, and `.config/docker-compose-base.yaml` is scaffolded and already takes `GRAFANA_VERSION`
+
 ## [3.1.0] - 2026-09-23
 
 ### Added
