@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The Release workflow ran the plugin validator as a report rather than a gate. The step carried `continue-on-error: true`, and it passed the archive without `-sourceCodeUri`, so the validator never read `yarn.lock` and its osv-scanner did not run at all; on `v3.0.0` it printed only the private-signature warning. It now runs the published `@grafana/plugin-validator` with the source tree and fails the release on any error
 - `tools/package-tag.sh` packaged the backend binaries with whatever mode the caller's umask gave them, and a umask of `002` leaves them `0775`. The catalogue's validator accepts exactly `0755` and rejects the archive otherwise, so the local `v3.0.0` artifact could not have been submitted, while the workflow build, made under a runner's `022`, could. The script now sets `0755` on the binaries before signing
+- `tools/package-tag.sh` ignored every failed command in its build. The build ran in a subshell followed by `|| die`, and bash switches errexit off inside the left operand of `||`, so a missing `mage` let the run go on to sign and package an archive with no backend in it. The status is now taken without `||`, the subshell turns errexit back on, the script refuses to start without `mage` on `PATH`, and it stops when `mage` writes no Linux binary
 
 ### Security
 

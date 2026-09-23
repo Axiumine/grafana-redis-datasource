@@ -195,7 +195,14 @@ package_tag() {
     node_version=16
   fi
 
+  # errexit is switched off inside anything that is the left operand of `||`, a
+  # subshell included, so `( ... ) || die` let every failed command through: a
+  # missing mage once produced a signed archive with no backend in it. The status
+  # is taken without `||` instead, and the subshell turns errexit back on.
+  local status=0
+  set +e
   (
+    set -e
     cd "$work"
     use_node "$node_version"
     say "Frontend"
@@ -204,6 +211,7 @@ package_tag() {
 
     say "Backend"
     mage -v buildAll
+    [ -x "dist/${plugin_id}_linux_amd64" ] || die "mage reported success but wrote no dist/${plugin_id}_linux_amd64."
     # The binaries inherit the caller's umask, and a umask of 002 leaves them
     # 0775. The catalogue's validator accepts exactly 0755 and rejects the
     # archive otherwise, while a CI runner's 022 happens to produce it.
@@ -237,7 +245,10 @@ package_tag() {
     mkdir -p "$OUT_DIR"
     mv "$plugin_id-$version.zip" "$plugin_id-$version.zip.md5" \
       "$plugin_id-$version.zip.sha1" "$OUT_DIR/"
-  ) || { cleanup_worktree; die "Build failed for $tag."; }
+  )
+  status=$?
+  set -e
+  [ "$status" -eq 0 ] || { cleanup_worktree; die "Build failed for $tag."; }
 
   cleanup_worktree
   ls -l "$OUT_DIR/$plugin_id-$version.zip" "$OUT_DIR/$plugin_id-$version.zip.md5" \
@@ -270,6 +281,8 @@ done
 if [ "$WILL_SIGN" = "1" ]; then
   check_signing_env
 fi
+
+command -v mage >/dev/null 2>&1 || die "mage is not on PATH. Install it with: go install github.com/magefile/mage@latest"
 
 for tag in "${TAGS[@]}"; do
   package_tag "$tag"
