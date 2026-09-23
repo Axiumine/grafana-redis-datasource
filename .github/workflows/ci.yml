@@ -72,6 +72,20 @@ jobs:
         run: |
           go run golang.org/x/vuln/cmd/govulncheck@latest ./pkg/...
 
+      # The catalogue's own validator, run on an unsigned archive of this build
+      # with the source tree beside it. The source is what lets its osv-scanner
+      # read yarn.lock and go.mod; it filters out what Grafana supplies at
+      # runtime, so it fails on what the catalogue would reject and nothing
+      # else. The unsigned-plugin warning is expected here and does not fail.
+      - name: Validate plugin
+        run: |
+          plugin_id=$(jq -r .id dist/plugin.json)
+          work=$(mktemp -d)
+          cp -r dist "$work/$plugin_id"
+          find "$work/$plugin_id" -maxdepth 1 -type f -name "${plugin_id}_*" -exec chmod 0755 {} +
+          (cd "$work" && zip -qr plugin.zip "$plugin_id")
+          npx --yes @grafana/plugin-validator@latest -sourceCodeUri "file://$GITHUB_WORKSPACE" "$work/plugin.zip"
+
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v5

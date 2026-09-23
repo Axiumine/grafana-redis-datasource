@@ -143,14 +143,14 @@ jobs:
           echo "checksum=$(cut -d' ' -f1 < ./${{ steps.metadata.outputs.archive-checksum }})" >> "$GITHUB_OUTPUT"
           echo "sha1=$(cut -d' ' -f1 < ./${{ steps.metadata.outputs.archive-sha1 }})" >> "$GITHUB_OUTPUT"
 
-      - name: Lint plugin
-        continue-on-error: true
+      # A gate, not a report. Without -sourceCodeUri the validator never reads
+      # yarn.lock and its osv-scanner does not run at all, which is how v3.0.0
+      # shipped with a high-severity finding the catalogue then rejected. The
+      # private-signature warning is expected until the community signature
+      # exists, and a warning does not fail the step.
+      - name: Validate plugin
         run: |
-          git clone https://github.com/grafana/plugin-validator
-          pushd ./plugin-validator/pkg/cmd/plugincheck2
-          go install
-          popd
-          plugincheck2 -config ./plugin-validator/config/default.yaml ${{ steps.metadata.outputs.archive }}
+          npx --yes @grafana/plugin-validator@latest -sourceCodeUri "file://$GITHUB_WORKSPACE" ${{ steps.metadata.outputs.archive }}
 
       - name: Create release
         uses: softprops/action-gh-release@v2

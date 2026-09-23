@@ -204,6 +204,10 @@ package_tag() {
 
     say "Backend"
     mage -v buildAll
+    # The binaries inherit the caller's umask, and a umask of 002 leaves them
+    # 0775. The catalogue's validator accepts exactly 0755 and rejects the
+    # archive otherwise, while a CI runner's 022 happens to produce it.
+    find dist -maxdepth 1 -type f -name "${plugin_id}_*" -exec chmod 0755 {} +
 
     say "Signing"
     if [ -n "$unsigned_reason" ]; then
