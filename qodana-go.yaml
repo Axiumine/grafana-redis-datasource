@@ -164,12 +164,13 @@ failureConditions:
     critical: 0
     high: 0
   # Measured, not guessed: Qodana counts lines where `go test -cover` counts
-  # statements, and a real run reports 99% total. The twelve lines it cannot
-  # reach are main() — see the exclusion above — and two tabwriter error
-  # branches in queryCustomCommand that a strings.Builder can never trigger,
-  # because Builder.Write always reports success. Everything else in pkg/ is
-  # covered, so 99 is the floor the tests actually hold, and a regression drops
-  # below it. Fresh code has no such excuse and stays at 100.
+  # statements, and a real run reports 2828 of 2832 lines covered, 99% total.
+  # The four it cannot reach are two tabwriter error branches in
+  # queryCustomCommand that a strings.Builder can never trigger, because
+  # Builder.Write always reports success; main(), excluded above, does not enter
+  # the count at all. Everything else in pkg/ is covered, so 99 is the floor the
+  # tests actually hold, and a regression drops below it. Fresh code has no such
+  # excuse and stays at 100.
   testCoverageThresholds:
     total: 99 # whole project
     fresh: 100 # new / changed code
