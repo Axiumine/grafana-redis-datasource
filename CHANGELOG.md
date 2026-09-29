@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The catalogue's review of `v3.1.0` reported one gosec finding of HIGH severity, G402 on `InsecureSkipVerify: configuration.TLSSkipVerify` in `pkg/redis-client.go`. gosec reports every `InsecureSkipVerify` it cannot prove false, and the validator counts every HIGH finding whatever its confidence. The value is the datasource's _Skip Verify_ setting, which is off by default and chosen per datasource, and which operators rely on to reach a server whose certificate cannot be verified, so the line now carries a `#nosec G402` annotation that says so rather than the option being taken away. New tests dial a loopback TLS server and prove what the annotation claims: a certificate no configured authority vouches for is refused, by the standalone, cluster and sentinel clients alike, one the configured authority vouches for is accepted, and only Skip Verify accepts any. The same configuration now also sets TLS 1.2 as its minimum version. That changes nothing on the Go versions the plugin builds with, whose clients have defaulted to TLS 1.2 since Go 1.18, but it states the floor in the code rather than leaving it to the toolchain, and a test refuses a server that offers nothing newer than TLS 1.1. This is the fork's first change to `pkg/redis-client.go`, so the file also left the `GoCommentStart` exclusion in `qodana-go.yaml`, and its four method comments now begin with the method's name
+
 ## [3.1.0] - 2026-09-23
 
 ### Added

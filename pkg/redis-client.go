@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -62,12 +65,12 @@ type radixV3Impl struct {
 	radixClient radixClient
 }
 
-// Execute Radix FlatCmd
+// RunFlatCmd executes a Radix FlatCmd.
 func (client *radixV3Impl) RunFlatCmd(rcv interface{}, cmd, key string, args ...interface{}) error {
 	return client.radixClient.Do(radix.FlatCmd(rcv, cmd, key, args...))
 }
 
-// Execute Batch FlatCmd
+// RunBatchFlatCmd executes a batch of Radix FlatCmds as one pipeline.
 func (client *radixV3Impl) RunBatchFlatCmd(commands []flatCommandArgs) error {
 	var actions []radix.CmdAction
 	for _, command := range commands {
@@ -79,12 +82,12 @@ func (client *radixV3Impl) RunBatchFlatCmd(commands []flatCommandArgs) error {
 	return client.radixClient.Do(pipeline)
 }
 
-// Execute Radix Cmd
+// RunCmd executes a Radix Cmd.
 func (client *radixV3Impl) RunCmd(rcv interface{}, cmd string, args ...string) error {
 	return client.radixClient.Do(radix.Cmd(rcv, cmd, args...))
 }
 
-// Close connection
+// Close closes the connection.
 func (client *radixV3Impl) Close() error {
 	return client.radixClient.Close()
 }
@@ -99,9 +102,12 @@ func getConnOpts(configuration redisClientConfiguration) ([]radix.DialOpt, error
 		return opts, err
 	}
 
-	// TLS Config
+	// TLS Config. The server certificate is verified unless the datasource opts
+	// out with Skip Verify, which is off by default; a certification authority
+	// is the way to trust a private certificate without turning verification off.
 	tlsConfig := &tls.Config{
-		InsecureSkipVerify: configuration.TLSSkipVerify,
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: configuration.TLSSkipVerify, // #nosec G402 -- opt-in per datasource, off by default
 	}
 
 	// Certification Authority

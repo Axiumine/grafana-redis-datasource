@@ -110,7 +110,6 @@ exclude:
       - pkg/models/redis-gears.go
       - pkg/models/redis-graph.go
       - pkg/models/redis-search.go
-      - pkg/redis-client.go
 
   - name: GoPreferNilSlice
     paths:

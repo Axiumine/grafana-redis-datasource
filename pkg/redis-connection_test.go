@@ -10,6 +10,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -19,6 +20,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/mediocregopher/radix/v3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +32,9 @@ const unreachableAddress = "127.0.0.1:1"
  * selfSignedPEM returns a certificate and its key, both PEM encoded.
  *
  * The certificate is generated rather than checked in: a fixture expires, and
- * an expired fixture turns these tests red on a date nobody chose.
+ * an expired fixture turns these tests red on a date nobody chose. It names
+ * 127.0.0.1, so a loopback server presenting it passes the host name check
+ * and the handshake tests below fail or pass on the authority alone.
  */
 func selfSignedPEM(t *testing.T) (certPEM string, keyPEM string) {
 	t.Helper()
@@ -46,6 +50,7 @@ func selfSignedPEM(t *testing.T) (certPEM string, keyPEM string) {
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
+		IPAddresses:           []net.IP{net.IPv4(127, 0, 0, 1)},
 	}
 
 	der, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
@@ -80,6 +85,48 @@ func acceptingListener(t *testing.T) string {
 			}
 
 			t.Cleanup(func() { _ = conn.Close() })
+		}
+	}()
+
+	t.Cleanup(func() { _ = listener.Close() })
+
+	return listener.Addr().String()
+}
+
+/**
+ * tlsListener starts a loopback TLS listener that completes the handshake of
+ * every connection and then says nothing.
+ *
+ * A server connection shakes hands on its first read or write, and this one
+ * does neither, so the handshake is driven explicitly. A maxVersion of 0 leaves
+ * the server on TLS 1.2 and newer; any other value caps it there and lowers the
+ * floor to TLS 1.0, which is what lets it stand in for an outdated server.
+ */
+func tlsListener(t *testing.T, certPEM string, keyPEM string, maxVersion uint16) string {
+	t.Helper()
+
+	cert, err := tls.X509KeyPair([]byte(certPEM), []byte(keyPEM))
+	require.NoError(t, err)
+
+	config := &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12}
+	if maxVersion != 0 {
+		config.MinVersion = tls.VersionTLS10
+		config.MaxVersion = maxVersion
+	}
+
+	listener, err := tls.Listen("tcp", "127.0.0.1:0", config)
+	require.NoError(t, err)
+
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				return
+			}
+
+			t.Cleanup(func() { _ = conn.Close() })
+
+			go func() { _ = conn.(*tls.Conn).Handshake() }()
 		}
 	}()
 
@@ -164,10 +211,96 @@ func TestGetConnOpts(t *testing.T) {
 }
 
 /**
+ * getConnOpts, through a TLS handshake
+ *
+ * The options getConnOpts returns are opaque radix.DialOpt values, so what they
+ * configure is observed where it takes effect: radix.Dial performs the TLS
+ * handshake, and a dial succeeds exactly when the client accepted the server's
+ * certificate and protocol version.
+ */
+func TestGetConnOptsHandshake(t *testing.T) {
+	t.Parallel()
+
+	certPEM, keyPEM := selfSignedPEM(t)
+
+	dial := func(t *testing.T, addr string, configuration redisClientConfiguration) error {
+		t.Helper()
+
+		configuration.Timeout = 10
+		configuration.TLSAuth = true
+
+		opts, err := getConnOpts(configuration)
+		require.NoError(t, err)
+
+		conn, err := radix.Dial("tcp", addr, opts...)
+		if err == nil {
+			require.NoError(t, conn.Close())
+		}
+
+		return err
+	}
+
+	t.Run("should refuse a certificate no configured authority vouches for", func(t *testing.T) {
+		t.Parallel()
+
+		err := dial(t, tlsListener(t, certPEM, keyPEM, 0), redisClientConfiguration{})
+
+		var authorityErr x509.UnknownAuthorityError
+		require.ErrorAs(t, err, &authorityErr)
+	})
+
+	t.Run("should accept a certificate the configured authority vouches for", func(t *testing.T) {
+		t.Parallel()
+
+		err := dial(t, tlsListener(t, certPEM, keyPEM, 0), redisClientConfiguration{TLSCACert: certPEM})
+		require.NoError(t, err)
+	})
+
+	t.Run("should accept any certificate when Skip Verify is on", func(t *testing.T) {
+		t.Parallel()
+
+		err := dial(t, tlsListener(t, certPEM, keyPEM, 0), redisClientConfiguration{TLSSkipVerify: true})
+		require.NoError(t, err)
+	})
+
+	// Skip Verify is on, so the certificate cannot be what fails the handshake.
+	// Go's client refuses TLS 1.1 by default as well, so this catches a floor
+	// lowered below TLS 1.2 rather than one left unset.
+	t.Run("should refuse a server that offers nothing newer than TLS 1.1", func(t *testing.T) {
+		t.Parallel()
+
+		err := dial(t, tlsListener(t, certPEM, keyPEM, tls.VersionTLS11), redisClientConfiguration{TLSSkipVerify: true})
+		require.ErrorContains(t, err, "protocol version")
+	})
+}
+
+/**
  * newRadixV3Client
  */
 func TestNewRadixV3Client(t *testing.T) {
 	t.Parallel()
+
+	// Every client type has to dial through getConnOpts. One that dialled around
+	// it would pass every getConnOpts test and still accept any certificate.
+	certPEM, keyPEM := selfSignedPEM(t)
+	for _, clientType := range []string{"standalone", "cluster", "sentinel"} {
+		t.Run("should verify the server certificate of a "+clientType+" client", func(t *testing.T) {
+			t.Parallel()
+
+			client, err := newRadixV3Client(redisClientConfiguration{
+				URL:          tlsListener(t, certPEM, keyPEM, 0),
+				Client:       clientType,
+				Timeout:      1,
+				PoolSize:     1,
+				TLSAuth:      true,
+				SentinelName: "mymaster",
+			})
+			require.Nil(t, client)
+
+			var authorityErr x509.UnknownAuthorityError
+			require.ErrorAs(t, err, &authorityErr)
+		})
+	}
 
 	t.Run("should build a standalone client", func(t *testing.T) {
 		t.Parallel()
