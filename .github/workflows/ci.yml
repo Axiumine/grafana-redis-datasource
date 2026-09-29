@@ -77,6 +77,19 @@ jobs:
       # read yarn.lock and go.mod; it filters out what Grafana supplies at
       # runtime, so it fails on what the catalogue would reject and nothing
       # else. The unsigned-plugin warning is expected here and does not fail.
+      #
+      # It runs from the catalogue's Docker image because the runner has none
+      # of gosec, semgrep, govulncheck or clamscan on its PATH, and the
+      # validator skips a pass without a word when its tool is missing. Under
+      # npx the gosec pass never ran here, which is how the G402 finding the
+      # catalogue reported on v3.1.0 got through. The source is exported from
+      # git rather than mounted from the workspace, because clamscan alone
+      # spends over six minutes on node_modules and the catalogue reads the
+      # repository, not a build tree.
+      #
+      # The validator reports a gosec finding of HIGH severity as a warning,
+      # which does not fail it, so .github/plugin-validator.yaml promotes that
+      # one rule to an error.
       - name: Validate plugin
         run: |
           plugin_id=$(jq -r .id dist/plugin.json)
@@ -84,7 +97,13 @@ jobs:
           cp -r dist "$work/$plugin_id"
           find "$work/$plugin_id" -maxdepth 1 -type f -name "${plugin_id}_*" -exec chmod 0755 {} +
           (cd "$work" && zip -qr plugin.zip "$plugin_id")
-          npx --yes @grafana/plugin-validator@latest -sourceCodeUri "file://$GITHUB_WORKSPACE" "$work/plugin.zip"
+          mkdir "$work/src"
+          git archive HEAD | tar -x -C "$work/src"
+          docker run --rm --pull=always \
+            -v "$work/plugin.zip:/archive.zip:ro" \
+            -v "$work/src:/source_code:ro" \
+            -v "$GITHUB_WORKSPACE/.github/plugin-validator.yaml:/validator.yaml:ro" \
+            grafana/plugin-validator-cli -config /validator.yaml -sourceCodeUri file:///source_code /archive.zip
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''

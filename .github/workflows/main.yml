@@ -148,9 +148,26 @@ jobs:
       # shipped with a high-severity finding the catalogue then rejected. The
       # private-signature warning is expected until the community signature
       # exists, and a warning does not fail the step.
+      #
+      # It runs from the catalogue's Docker image because the runner has none
+      # of gosec, semgrep, govulncheck or clamscan on its PATH, and the
+      # validator skips a pass without a word when its tool is missing. The
+      # source is exported from git rather than mounted from the workspace,
+      # because clamscan alone spends over six minutes on node_modules. Do not
+      # add -strict: it turns the private-signature warning into a failure.
+      #
+      # The validator reports a gosec finding of HIGH severity as a warning,
+      # which does not fail it, so .github/plugin-validator.yaml promotes that
+      # one rule to an error.
       - name: Validate plugin
         run: |
-          npx --yes @grafana/plugin-validator@latest -sourceCodeUri "file://$GITHUB_WORKSPACE" ${{ steps.metadata.outputs.archive }}
+          src=$(mktemp -d)
+          git archive HEAD | tar -x -C "$src"
+          docker run --rm --pull=always \
+            -v "$GITHUB_WORKSPACE/${{ steps.metadata.outputs.archive }}:/archive.zip:ro" \
+            -v "$src:/source_code:ro" \
+            -v "$GITHUB_WORKSPACE/.github/plugin-validator.yaml:/validator.yaml:ro" \
+            grafana/plugin-validator-cli -config /validator.yaml -sourceCodeUri file:///source_code /archive.zip
 
       - name: Create release
         uses: softprops/action-gh-release@v2

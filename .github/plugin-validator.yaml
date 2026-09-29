@@ -1,0 +1,28 @@
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+# Configuration for the catalogue's plugin validator, as CI and the Release
+# workflow run it. The validator reports a gosec finding of HIGH severity as a
+# warning, and a warning never fails its exit code, so without this file the
+# G402 finding would be printed on every run while the build passed. Promoting
+# that one rule makes it a gate. -strict is not used instead, because it would
+# also fail on the private-signature warning, which this fork carries until it
+# has a community signature.
+#
+# global.enabled has to stay true. A configuration file replaces the built-in
+# default, and a file that leaves the value out disables every rule, so the
+# validator then exits 0 without printing a single diagnostic.
+#
+# A rule name the validator does not know is ignored just as quietly, so a
+# rename upstream would turn the finding back into a warning. The name comes
+# from pkg/analysis/passes/gosec in grafana/plugin-validator.
+global:
+  enabled: true
+
+analyzers:
+  go-sec:
+    rules:
+      go-sec-issue-found:
+        severity: error
