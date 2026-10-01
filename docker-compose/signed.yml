@@ -19,9 +19,16 @@
 #   unzip -o artifacts/axiumine-redis-datasource-3.0.0.zip -d artifacts/extracted
 #   yarn start:signed
 #
-# The Grafana log line to look for is "Plugin signature valid". "Could not find
-# root URL that matches running application URL" means the signature was issued
-# for a different root_url than the one below.
+# Grafana 13 no longer logs a "Plugin signature valid" line at info level, so
+# ask the API instead, once the log shows "Plugin registered" for the plugin id:
+#
+#   curl -s http://localhost:3854/api/plugins/axiumine-redis-datasource/settings |
+#     grep -o '"signature[A-Za-z]*":"[^"]*"'
+#
+# A good artifact reports "signature":"valid" and "signatureType":"private". An
+# invalid signature is never registered, so the plugin is then missing altogether, and
+# "Could not find root URL that matches running application URL" in the log
+# means the signature was issued for a different root_url than the one below.
 
 version: '3.4'
 
