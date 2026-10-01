@@ -1,3 +1,6 @@
+// Modified in 2026 by Axiumine, from the original in
+// RedisGrafana/grafana-redis-datasource at 09df07a. See NOTICE and CHANGELOG.md.
+
 package main
 
 import (
@@ -119,19 +122,12 @@ func queryCustomCommand(qm queryModel, client redisClient) backend.DataResponse 
 		// Use a tab writer for having CLI-like tabulation aligned right
 		tabWriter := tabwriter.NewWriter(&builder, 0, 1, 0, ' ', tabwriter.AlignRight)
 
-		// Concatenate everything to string with proper tabs and newlines and pass it to tabWriter for tab formatting
-		_, err := fmt.Fprint(tabWriter, convertToCLI(result, ""))
-
-		// Check formatting error
-		if err != nil {
-			log.DefaultLogger.Error("Error when writing to TabWriter", "error", err.Error(), "query", qm.Query)
-		}
-
-		// Check tab writer error
-		err = tabWriter.Flush()
-		if err != nil {
-			log.DefaultLogger.Error("Error when flushing TabWriter", "error", err.Error(), "query", qm.Query)
-		}
+		// Concatenate everything to string with proper tabs and newlines and pass it
+		// to tabWriter for tab formatting. Neither call can fail: a tabwriter.Writer
+		// returns only the errors of the writer beneath it, and a strings.Builder
+		// always returns a nil error, so both results are discarded on purpose.
+		_, _ = fmt.Fprint(tabWriter, convertToCLI(result, ""))
+		_ = tabWriter.Flush()
 
 		// Get the properly formatted string from the string builder
 		processed := builder.String()

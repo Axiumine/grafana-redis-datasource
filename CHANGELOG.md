@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Every line of the Go backend is now covered, `go test -cover` reports 100.0% of statements where it reported 99.6%, and `qodana-go.yaml` holds the total at 100% where it held 99%, as `qodana-js.yaml` already did for the frontend. `main()` reaches `backend.Manage` and `os.Exit` through two package variables, so a test runs it with stand-ins for both and checks that it serves the datasource under the plugin id and exits with 1 when it cannot; `pkg/main.go` no longer needs its exclusion from the coverage inspection. `queryCustomCommand` no longer checks the errors of its CLI formatting, because there are none to check: a `tabwriter.Writer` returns only the errors of the writer beneath it, and beneath it is a `strings.Builder`, which never returns one, so the two branches that logged them could not run
+
 ## [3.1.1] - 2026-09-29
 
 ### Fixed

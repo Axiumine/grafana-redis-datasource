@@ -67,16 +67,6 @@ exclude:
     paths:
       - package.json
 
-  # main() is the process entry point: it calls backend.Manage, which blocks
-  # until Grafana shuts the plugin down, and then os.Exit. Neither can be driven
-  # from a unit test, so the coverage inspection reports the file at 0% on every
-  # run. The number is honest and the gate below already accounts for it; what
-  # is excluded here is only the per-file inspection, which would otherwise sit
-  # at HIGH severity and fail the run for something no test can reach.
-  - name: GoCoverageInspection
-    paths:
-      - pkg/main.go
-
   # False positive. The inspection reports that the second argument to
   # errors.As must point at a type implementing error, but resp2.Error declares
   # `func (e Error) Error() string` with a value receiver, so resp2.Error does
@@ -163,14 +153,9 @@ failureConditions:
   severityThresholds:
     critical: 0
     high: 0
-  # Measured, not guessed: Qodana counts lines where `go test -cover` counts
-  # statements, and a real run reports 2828 of 2832 lines covered, 99% total.
-  # The four it cannot reach are two tabwriter error branches in
-  # queryCustomCommand that a strings.Builder can never trigger, because
-  # Builder.Write always reports success; main(), excluded above, does not enter
-  # the count at all. Everything else in pkg/ is covered, so 99 is the floor the
-  # tests actually hold, and a regression drops below it. Fresh code has no such
-  # excuse and stays at 100.
+  # Every line of pkg/ is covered, main() included: the tests run it with
+  # stand-ins for backend.Manage and os.Exit. The floor is therefore 100 on both
+  # counts, and any line a change leaves untested fails the run.
   testCoverageThresholds:
-    total: 99 # whole project
+    total: 100 # whole project
     fresh: 100 # new / changed code

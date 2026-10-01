@@ -6,8 +6,8 @@
 
 # Runs Qodana over the working tree before a commit is created, and enforces the
 # quality gate declared in qodana-go.yaml and qodana-js.yaml: no CRITICAL and no
-# HIGH problems, 100% test coverage on changed lines, and a measured overall
-# floor — 99% for the Go backend, 100% for the TypeScript frontend.
+# HIGH problems, and 100% test coverage both on changed lines and overall, for
+# the Go backend and the TypeScript frontend alike.
 #
 # One Qodana run analyses one linter image, so the Go backend and the TypeScript
 # frontend are two runs. Both need an Ultimate or Ultimate Plus licence —

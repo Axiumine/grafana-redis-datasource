@@ -15,16 +15,23 @@ import (
 // plugin from loading under Grafana; it only breaks that debugging mode.
 const pluginID = "axiumine-redis-datasource"
 
+// manage and exit are backend.Manage and os.Exit, held in variables so that the
+// tests can run main without serving Grafana or ending the test process.
+var (
+	manage = backend.Manage
+	exit   = os.Exit
+)
+
 /**
  * Start listening to requests send from Grafana.
  * This call is blocking so it wont finish until Grafana shutsdown the process or the plugin choose to exit close down by itself
  */
 func main() {
-	err := backend.Manage(pluginID, newDatasource())
+	err := manage(pluginID, newDatasource())
 
 	// Log any error if we could start the plugin.
 	if err != nil {
 		log.DefaultLogger.Error(err.Error())
-		os.Exit(1)
+		exit(1)
 	}
 }
