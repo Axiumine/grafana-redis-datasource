@@ -66,7 +66,14 @@ use_node() {
   [ -s "$HOME/.nvm/nvm.sh" ] || die "nvm not found; it is needed to build tags that predate the create-plugin migration."
   . "$HOME/.nvm/nvm.sh"
   nvm use "$want" >/dev/null || die "nvm has no Node $want installed. Run: nvm install $want"
-  command -v yarn >/dev/null 2>&1 || npm install -g yarn@1.22.22 >/dev/null 2>&1
+  if ! command -v yarn >/dev/null 2>&1; then
+    # Corepack ships with Node 16.9 and later and resolves Yarn 1.22.22 without
+    # touching the nvm install, which `npm install -g` would.
+    local shims
+    shims=$(mktemp -d)
+    corepack enable --install-directory "$shims" yarn >/dev/null 2>&1 || die "Yarn is not installed and corepack could not provide it."
+    export PATH="$shims:$PATH"
+  fi
 }
 
 # zip(1) is not installed everywhere. The fallback preserves the executable bit

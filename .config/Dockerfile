@@ -1,7 +1,10 @@
-ARG grafana_version=latest
+# Modified in 2026 by Axiumine. The base image is pinned by digest, so overriding
+# grafana_version also means overriding grafana_digest. See NOTICE and CHANGELOG.md.
+ARG grafana_version=13.2.2
 ARG grafana_image=grafana-enterprise
+ARG grafana_digest=sha256:3865fe366013be675e8e80e4b8d7f5828e40b3f132f53cee32d8890d9a0dd27b
 
-FROM grafana/${grafana_image}:${grafana_version}
+FROM grafana/${grafana_image}:${grafana_version}@${grafana_digest}
 
 ARG anonymous_auth_enabled=true
 ARG development=false
@@ -57,7 +60,7 @@ RUN if [ "${development}" = "true" ]; then \
 
 # Installing delve for debugging
 RUN if [ "${development}" = "true" ]; then \
-    /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest; \
+    /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@v1.27.2; \
     fi
 
 # Installing mage for plugin (re)building

@@ -9,7 +9,6 @@ on: [push, pull_request]
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   # One Qodana run analyses one linter image, so the Go backend and the
@@ -19,17 +18,22 @@ jobs:
   backend:
     runs-on: ubuntu-latest
 
+    # Uploading SARIF is the only write; the rest of the workflow stays read-only.
+    permissions:
+      contents: read
+      security-events: write
+
     env:
       QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0 # Qodana reads history to attribute problems to commits.
 
       - name: Scan backend
         if: env.QODANA_TOKEN != ''
-        uses: JetBrains/qodana-action@v2026.2
+        uses: JetBrains/qodana-action@3e8d76ff0e0241618abd808682f426afe84bab3f # v2026.2.2
         with:
           args: --config,qodana-go.yaml
           primary-cache-key: qodana-go-${{ github.ref }}-${{ github.sha }}
@@ -40,7 +44,7 @@ jobs:
       # gate would withhold the very findings that explain the failure.
       - name: Upload backend results to code scanning
         if: always() && env.QODANA_TOKEN != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
           category: qodana-go
@@ -48,17 +52,22 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
 
+    # Uploading SARIF is the only write; the rest of the workflow stays read-only.
+    permissions:
+      contents: read
+      security-events: write
+
     env:
       QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
       - name: Scan frontend
         if: env.QODANA_TOKEN != ''
-        uses: JetBrains/qodana-action@v2026.2
+        uses: JetBrains/qodana-action@3e8d76ff0e0241618abd808682f426afe84bab3f # v2026.2.2
         with:
           args: --config,qodana-js.yaml
           primary-cache-key: qodana-js-${{ github.ref }}-${{ github.sha }}
@@ -66,7 +75,7 @@ jobs:
 
       - name: Upload frontend results to code scanning
         if: always() && env.QODANA_TOKEN != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
           category: qodana-js

@@ -1,0 +1,62 @@
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+name: Sign release assets
+
+# Attaches a keyless cosign bundle to the zip of releases that were published
+# before the Release workflow started signing. Run it by hand, once per release
+# or once for all of them. The assets are signed as published and are not
+# rebuilt, so the checksums on the release stay valid. The signature says that
+# this workflow vouches for those bytes; it makes no claim about how they were
+# built, which is the provenance job's business and only exists for new tags.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to sign. Empty signs every published release.
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # Upload the bundle to the release.
+      id-token: write # Keyless signing certificate.
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ inputs.tag }}
+
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
+      - name: Sign release zips
+        run: |
+          set -euo pipefail
+          if [ -n "$TAG" ]; then
+            tags="$TAG"
+          else
+            tags=$(gh release list --exclude-drafts --limit 100 --json tagName --jq '.[].tagName')
+          fi
+          for tag in $tags; do
+            dir=$(mktemp -d)
+            gh release download "$tag" --pattern '*.zip' --dir "$dir"
+            for zip in "$dir"/*.zip; do
+              name=$(basename "$zip")
+              if gh release view "$tag" --json assets --jq '.assets[].name' | grep -qx "$name.sigstore.json"; then
+                echo "$tag: $name is already signed"
+                continue
+              fi
+              cosign sign-blob --yes --bundle "$dir/$name.sigstore.json" "$zip"
+              gh release upload "$tag" "$dir/$name.sigstore.json"
+              echo "$tag: signed $name"
+            done
+          done
