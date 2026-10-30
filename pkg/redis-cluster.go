@@ -131,11 +131,16 @@ func queryClusterNodes(qm queryModel, client redisClient) backend.DataResponse {
 	return response
 }
 
+// clusterSlotCount is the number of hash slots in a Redis Cluster, numbered 0 to 16383.
+const clusterSlotCount = 16384
+
 /**
  * countClusterSlots counts the slots served by a node.
  *
  * Handles "0-5460" ranges and bare "1234" slots; importing and migrating
- * markers such as "[1234-<-<node-id>]" are not served yet and are skipped.
+ * markers such as "[1234-<-<node-id>]" are not served yet and are skipped, and
+ * so is anything outside 0-16383, which also keeps a hostile range from
+ * overflowing the total.
  */
 func countClusterSlots(slots []string) int64 {
 	var total int64
@@ -148,7 +153,7 @@ func countClusterSlots(slots []string) int64 {
 		bounds := strings.SplitN(slot, "-", 2)
 
 		from, err := strconv.ParseInt(bounds[0], 10, 64)
-		if err != nil {
+		if err != nil || from < 0 || from >= clusterSlotCount {
 			continue
 		}
 
@@ -158,13 +163,11 @@ func countClusterSlots(slots []string) int64 {
 		}
 
 		to, err := strconv.ParseInt(bounds[1], 10, 64)
-		if err != nil {
+		if err != nil || to < from || to >= clusterSlotCount {
 			continue
 		}
 
-		if to >= from {
-			total += to - from + 1
-		}
+		total += to - from + 1
 	}
 
 	return total

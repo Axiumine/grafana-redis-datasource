@@ -201,5 +201,10 @@ func TestCountClusterSlotsSkipsMalformedFields(t *testing.T) {
 	require.Equal(t, int64(1), countClusterSlots([]string{"5"}), "a single slot")
 	require.Equal(t, int64(0), countClusterSlots([]string{"[93-<-abc]"}), "a migrating slot")
 	require.Equal(t, int64(0), countClusterSlots([]string{"100-99"}), "an inverted range")
+	require.Equal(t, int64(0), countClusterSlots([]string{"-5"}), "a negative slot")
+	require.Equal(t, int64(0), countClusterSlots([]string{"16384"}), "a slot past the last one")
+	require.Equal(t, int64(0), countClusterSlots([]string{"0-16384"}), "a range past the last slot")
+	require.Equal(t, int64(0), countClusterSlots([]string{"0-9223372036854775807"}), "a range that would overflow the total")
+	require.Equal(t, int64(16384), countClusterSlots([]string{"0-16383"}), "every slot")
 	require.Equal(t, int64(3), countClusterSlots([]string{"abc", "0-1", "9"}), "the rest of the line survives")
 }
