@@ -1,0 +1,24 @@
+# Copyright 2026 Axiumine
+#
+# Added in the Axiumine fork of RedisGrafana/grafana-redis-datasource.
+# Licensed under the Apache License, Version 2.0. See LICENSE.
+
+# Advisories that osv-scanner, and with it the OpenSSF Scorecard Vulnerabilities
+# check, would otherwise count against yarn.lock, each with the reason it cannot
+# be fixed here. An entry expires so that it is looked at again: delete it as
+# soon as a patched release exists.
+
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2026-12-31
+reason = "deepmerge 4.3.1 is the newest release and the advisory covers every version through it, so there is nothing to upgrade to. It is a build-time dependency of fork-ts-checker-webpack-plugin and jest-config, merges only this repository's own configuration, and is not in dist/module.js."
+
+[[IgnoredVulns]]
+id = "GHSA-337j-9hxr-rhxg"
+ignoreUntil = 2026-12-31
+reason = "react-router 6.30.6 comes in through react-router-dom-v5-compat, pinned exactly by @grafana/ui. The fix exists only in 7.18.0, which that package cannot use. Grafana supplies react-router at runtime and the plugin bundle lists it as external, so dist/module.js carries none of it. The advisory concerns server-side rendering hydration, and this plugin renders only in the browser."
+
+[[IgnoredVulns]]
+id = "GHSA-wrjc-x8rr-h8h6"
+ignoreUntil = 2026-12-31
+reason = "Same package and same constraint as GHSA-337j-9hxr-rhxg: fixed only in react-router 7.18.0, supplied by Grafana at runtime, absent from dist/module.js. The plugin does not call Link or useNavigate with a path taken from user input."
