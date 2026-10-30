@@ -24,6 +24,7 @@ notice at the top, per Apache-2.0 section 4(b):
     CHANGELOG.md
     README.md
     Dockerfile
+    docker-compose/cluster/Dockerfile
     go.mod
     go.sum
     package.json
@@ -100,6 +101,14 @@ notice at the top, per Apache-2.0 section 4(b):
     pkg/redis-value.go
     pkg/redis-value_test.go
     tools/package-tag.sh
+    osv-scanner.toml
+    SECURITY.md
+    CONTRIBUTING.md
+    CODE_OF_CONDUCT.md
+    GOVERNANCE.md
+    .github/workflows/scorecard.yml
+    .github/workflows/sign-release.yml
+    pkg/fuzz_test.go
 
   Removed
     config/jest-setup.ts
