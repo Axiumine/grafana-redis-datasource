@@ -22,3 +22,13 @@ reason = "react-router 6.30.6 comes in through react-router-dom-v5-compat, pinne
 id = "GHSA-wrjc-x8rr-h8h6"
 ignoreUntil = 2026-12-31
 reason = "Same package and same constraint as GHSA-337j-9hxr-rhxg: fixed only in react-router 7.18.0, supplied by Grafana at runtime, absent from dist/module.js. The plugin does not call Link or useNavigate with a path taken from user input."
+
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2026-12-31
+reason = "Published on 2026-10-30. glob 11.1.0 is requested as ^11.1.0 by a build-time package, and the fix exists only in 14.0.2, three major versions on. The advisory is an aborted AbortSignal walk that keeps reading directories, which matters to a server bounding untrusted glob requests with a timeout and not to a build tool. glob is not in dist/module.js."
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2026-12-31
+reason = "Published on 2026-10-30. minimatch 10.2.6 (through glob and typescript-estree) and 3.1.5 (through build-time packages) are requested within ranges that exclude 11.0.1, the only fixed release. The advisory needs an attacker-controlled pattern, and every pattern here is this repository's own configuration. minimatch is not in dist/module.js."
