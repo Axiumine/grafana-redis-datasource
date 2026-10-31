@@ -18,8 +18,7 @@ A security problem is not a bug report: follow [SECURITY.md](SECURITY.md) instea
 1. Fork the repository and branch from `main`.
 2. Make the change, with tests, following the sections below.
 3. Open a pull request against `main` and describe what changed and why. Continuous
-   integration has to pass, and a maintainer other than the author reviews it before
-   it is merged.
+   integration has to pass, and the maintainer reviews it before it is merged.
 
 Small, focused pull requests are reviewed faster than large ones. If a change is big,
 open an issue first so the direction can be agreed before the work is done.
