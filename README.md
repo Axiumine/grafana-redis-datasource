@@ -8,6 +8,7 @@
 [![Integration](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/integration.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/integration.yml)
 [![Qodana](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/qodana.yml/badge.svg)](https://github.com/Axiumine/grafana-redis-datasource/actions/workflows/qodana.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Axiumine/grafana-redis-datasource/badge)](https://scorecard.dev/viewer/?uri=github.com/Axiumine/grafana-redis-datasource)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16120/badge)](https://www.bestpractices.dev/projects/16120)
 
 This fork is not in Grafana's plugin catalogue, so no catalogue badge describes it.
 The entry for [`redis-datasource`](https://grafana.com/grafana/plugins/redis-datasource)
