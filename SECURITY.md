@@ -44,7 +44,7 @@ left open and why.
 ## Verifying a release
 
 Release zips are signed with Sigstore. A release cut by the Release workflow also
-carries SLSA provenance; releases published before that workflow signed anything got
+carries build provenance; releases published before that workflow signed anything got
 their signature afterwards, from the Sign release assets workflow, and have no
 provenance. Download the zip and its `.sigstore.json` bundle, then check them against
 the workflow that produced them:
@@ -57,8 +57,16 @@ cosign verify-blob \
   axiumine-redis-datasource-X.Y.Z.zip
 ```
 
-A release that has a `.intoto.jsonl` file can also be checked with
-[slsa-verifier](https://github.com/slsa-framework/slsa-verifier) using
-`verify-artifact --provenance-path <file> --source-uri github.com/Axiumine/grafana-redis-datasource`.
+A release that has a `.intoto.jsonl` file carries SLSA build provenance: an in-toto
+statement, signed through GitHub's artifact attestations, that names the repository,
+workflow, tag and commit the zip was built from. The file is a Sigstore bundle, and the
+GitHub CLI checks it against this repository:
+
+```bash
+gh attestation verify axiumine-redis-datasource-X.Y.Z.zip \
+  --bundle axiumine-redis-datasource-X.Y.Z.zip.intoto.jsonl \
+  --repo Axiumine/grafana-redis-datasource
+```
+
 This is separate from Grafana's own plugin signature, which is a file inside the zip
 and is checked by Grafana when it loads the plugin.

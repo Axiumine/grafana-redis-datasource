@@ -10,7 +10,8 @@ name: Sign release assets
 # or once for all of them. The assets are signed as published and are not
 # rebuilt, so the checksums on the release stay valid. The signature says that
 # this workflow vouches for those bytes; it makes no claim about how they were
-# built, which is the provenance job's business and only exists for new tags.
+# built, which is the business of the provenance attestation in the Release
+# workflow and only exists for new tags.
 on:
   workflow_dispatch:
     inputs:

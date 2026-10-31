@@ -16,14 +16,13 @@ jobs:
     runs-on: ubuntu-latest
 
     # contents: write attaches the assets to the draft release, id-token: write
-    # lets cosign obtain its keyless signing certificate from the workflow's
-    # OIDC identity.
+    # lets cosign and the attestation obtain a keyless signing certificate from
+    # the workflow's OIDC identity, and attestations: write stores the build
+    # provenance.
     permissions:
       contents: write
       id-token: write
-
-    outputs:
-      hashes: ${{ steps.hash.outputs.hashes }}
+      attestations: write
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -162,12 +161,6 @@ jobs:
       - name: Sign package
         run: cosign sign-blob --yes --bundle "${{ steps.metadata.outputs.archive }}.sigstore.json" "${{ steps.metadata.outputs.archive }}"
 
-      # SLSA subjects are sha256sum lines, base64 encoded, and the provenance job
-      # below attests to exactly these bytes.
-      - name: Hash package for provenance
-        id: hash
-        run: echo "hashes=$(sha256sum "${{ steps.metadata.outputs.archive }}" | base64 -w0)" >> "$GITHUB_OUTPUT"
-
       # A gate, not a report. Without -sourceCodeUri the validator never reads
       # yarn.lock and its osv-scanner does not run at all, which is how v3.0.0
       # shipped with a high-severity finding the catalogue then rejected. The
@@ -196,6 +189,21 @@ jobs:
             -v "$src:/source_code:ro" \
             grafana/plugin-validator-cli -sourceCodeUri file:///source_code /archive.zip
 
+      # Build provenance for the zip: a signed in-toto SLSA statement that names
+      # this repository, workflow, tag and commit. It comes from a SHA-pinned
+      # action and not from the SLSA generator's reusable workflow, which can
+      # only be called by tag and so counts as an unpinned dependency. The bundle
+      # is attached as *.intoto.jsonl, the name Scorecard looks for, and is
+      # checked with gh attestation verify --bundle.
+      - name: Attest provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ${{ steps.metadata.outputs.archive }}
+
+      - name: Name the provenance bundle
+        run: cp "${{ steps.attest.outputs.bundle-path }}" "${{ steps.metadata.outputs.archive }}.intoto.jsonl"
+
       - name: Create release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
@@ -207,19 +215,4 @@ jobs:
             ./${{ steps.metadata.outputs.archive-checksum }}
             ./${{ steps.metadata.outputs.archive-sha1 }}
             ./${{ steps.metadata.outputs.archive }}.sigstore.json
-
-  # Generates the in-toto provenance (*.intoto.jsonl) for the zip and attaches it
-  # to the release. The release stays a draft, so publishing remains the
-  # deliberate second step it is today. The reusable workflow has to be called
-  # by tag, not by commit: the generator verifies its own reference.
-  provenance:
-    needs: release
-    permissions:
-      actions: read
-      id-token: write
-      contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
-    with:
-      base64-subjects: ${{ needs.release.outputs.hashes }}
-      upload-assets: true
-      draft-release: true
+            ./${{ steps.metadata.outputs.archive }}.intoto.jsonl
