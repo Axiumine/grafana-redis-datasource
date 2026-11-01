@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Qodana workflow now runs on the organisation's self-hosted runners instead of GitHub-hosted ones, and triggers on `push` and `workflow_dispatch` only. Dropping `pull_request` keeps a workflow from a fork off those servers; a fork pull request never received `QODANA_TOKEN`, so its scans were skipped already, and a branch of this repository is scanned by its push. Every other workflow stays on GitHub-hosted runners
+
 ## [3.1.2] - 2026-11-01
 
 ### Added

@@ -5,7 +5,14 @@
 
 name: Qodana
 
-on: [push, pull_request]
+# Push only, and workflow_dispatch for a manual run. Both jobs run on the
+# organisation's own servers, and a pull_request from a fork would execute
+# whatever workflow that fork carries on them. A fork pull request never had the
+# QODANA_TOKEN secret either, so the scans were skipped for it anyway, and a
+# branch of this repository is covered by its push.
+on:
+  push:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,8 +22,12 @@ jobs:
   # TypeScript frontend need a job each. Neither qodana-go nor qodana-js has a
   # Community edition, so both jobs skip themselves when QODANA_TOKEN is unset,
   # the same way the Codecov step in ci.yml skips without CODECOV_TOKEN.
+  #
+  # The runners are self-hosted, in the organisation's Default runner group,
+  # which lists the private repositories and this one and no other public
+  # repository. Qodana is the only workflow here that uses them.
   backend:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     # Uploading SARIF is the only write; the rest of the workflow stays read-only.
     permissions:
@@ -50,7 +61,7 @@ jobs:
           category: qodana-go
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     # Uploading SARIF is the only write; the rest of the workflow stays read-only.
     permissions:
