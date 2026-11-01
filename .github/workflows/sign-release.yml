@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   sign:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     permissions:
       contents: write # Upload the bundle to the release.

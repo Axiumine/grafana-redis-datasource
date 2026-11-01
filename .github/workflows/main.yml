@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     # contents: write attaches the assets to the draft release, id-token: write
     # lets cosign and the attestation obtain a keyless signing certificate from
@@ -31,7 +31,12 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-          cache: yarn
+
+      # The self-hosted runners have no Yarn, which setup-node needs for
+      # cache: yarn, so the cache is dropped and the runners keep Yarn's own
+      # between runs. Corepack ships with Node 24 and provides Yarn.
+      - name: Enable Yarn
+        run: corepack enable yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -106,8 +111,6 @@ jobs:
       - name: Get plugin metadata
         id: metadata
         run: |
-          sudo apt-get install jq
-
           export GRAFANA_PLUGIN_ID=$(cat dist/plugin.json | jq -r .id)
           export GRAFANA_PLUGIN_VERSION=$(cat dist/plugin.json | jq -r .info.version)
           export GRAFANA_PLUGIN_TYPE=$(cat dist/plugin.json | jq -r .type)
@@ -183,6 +186,7 @@ jobs:
       - name: Validate plugin
         run: |
           src=$(mktemp -d)
+          trap 'rm -rf "$src"' EXIT
           git archive HEAD | tar -x -C "$src"
           docker run --rm --pull=always \
             -v "$GITHUB_WORKSPACE/${{ steps.metadata.outputs.archive }}:/archive.zip:ro" \

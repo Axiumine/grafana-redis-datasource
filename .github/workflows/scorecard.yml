@@ -20,6 +20,8 @@ permissions: read-all
 
 jobs:
   analysis:
+    # Stays on a GitHub-hosted runner: the action documents that publishing its
+    # result to scorecard.dev requires one.
     runs-on: ubuntu-latest
 
     permissions:

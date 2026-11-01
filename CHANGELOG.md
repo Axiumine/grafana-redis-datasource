@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The Qodana workflow now runs on the organisation's self-hosted runners instead of GitHub-hosted ones, and triggers on `push` and `workflow_dispatch` only. Dropping `pull_request` keeps a workflow from a fork off those servers; a fork pull request never received `QODANA_TOKEN`, so its scans were skipped already, and a branch of this repository is scanned by its push. Every other workflow stays on GitHub-hosted runners
+- Moved the Qodana, CI, Release, Integration and Sign release assets workflows to the organisation's self-hosted runners. Qodana now triggers on `push` and `workflow_dispatch` only: dropping `pull_request` keeps a workflow from a fork off those servers, a fork pull request never received `QODANA_TOKEN` so its scans were skipped already, and a branch of this repository is scanned by its push. The runners have no Yarn, so these workflows enable it through Corepack and no longer use the Yarn cache of `setup-node`; the Release workflow no longer installs `jq` with `sudo`, which two of the runners do not allow; the Integration workflow takes its compose environments down at the end, because a persistent server, unlike a GitHub-hosted runner, keeps their containers and the host ports they publish; and the validator steps remove their temporary directories. The Scorecard workflow stays on a GitHub-hosted runner, since the action documents that publishing its result requires one. A release is therefore built on the maintainer's own servers, and its provenance attestation names a self-hosted runner
 
 ## [3.1.2] - 2026-11-01
 

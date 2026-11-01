@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -22,7 +22,12 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-          cache: yarn
+
+      # The self-hosted runners have no Yarn, which setup-node needs for
+      # cache: yarn, so the cache is dropped and the runners keep Yarn's own
+      # between runs. Corepack ships with Node 24 and provides Yarn.
+      - name: Enable Yarn
+        run: corepack enable yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -97,6 +102,7 @@ jobs:
         run: |
           plugin_id=$(jq -r .id dist/plugin.json)
           work=$(mktemp -d)
+          trap 'rm -rf "$work"' EXIT
           cp -r dist "$work/$plugin_id"
           find "$work/$plugin_id" -maxdepth 1 -type f -name "${plugin_id}_*" -exec chmod 0755 {} +
           (cd "$work" && zip -qr plugin.zip "$plugin_id")

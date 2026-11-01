@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -23,7 +23,12 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-          cache: yarn
+
+      # The self-hosted runners have no Yarn, which setup-node needs for
+      # cache: yarn, so the cache is dropped and the runners keep Yarn's own
+      # between runs. Corepack ships with Node 24 and provides Yarn.
+      - name: Enable Yarn
+        run: corepack enable yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -79,3 +84,12 @@ jobs:
         with:
           version: latest
           args: cluster
+
+      # The compose files publish Redis on host ports 6379 to 6381 and 63790 and
+      # leave their containers running, which a GitHub-hosted runner discards with
+      # its VM and a persistent server does not.
+      - name: Remove the compose environments
+        if: always()
+        run: |
+          docker compose -f docker-compose/cluster.yml down -v --remove-orphans
+          docker compose -f docker-compose/test.yml -p grd-integration down -v --remove-orphans
