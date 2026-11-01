@@ -24,6 +24,16 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
 
+      # The private runners are shared with other repositories, and this one is
+      # public. Qodana is the only workflow allowed on them, so a workflow that
+      # names them in any other file fails here before it can be merged.
+      - name: Keep other workflows off the private runners
+        run: |
+          if grep -nE 'self-host[e]d' .github/workflows/*.yml | grep -v '/qodana.yml:'; then
+            echo "::error::Only qodana.yml may run on the private runners"
+            exit 1
+          fi
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
