@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-11-01
+
 ### Added
 
 - Added an OpenSSF Scorecard workflow, `.github/workflows/scorecard.yml`, which scores the repository weekly and on every push to `main`, publishes the result to scorecard.dev and uploads it to code scanning, and a badge for it in the README. The action is documented as unsupported in a repository GitHub marks as a fork, which this one still is, so whether the result is accepted for publication is settled by its first run
@@ -477,7 +479,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supports RedisTimeSeries commands: TS.MRANGE, TS.RANGE.
 - Provides Redis monitoring dashboard.
 
-[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.1.1...main
+[unreleased]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.1.2...main
+[3.1.2]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.1.1...v3.1.2
 [3.1.1]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/Axiumine/grafana-redis-datasource/compare/v2.3.0...v3.0.0
