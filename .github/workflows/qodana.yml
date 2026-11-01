@@ -24,8 +24,8 @@ jobs:
   # the same way the Codecov step in ci.yml skips without CODECOV_TOKEN.
   #
   # The runners are self-hosted, in the organisation's Default runner group,
-  # which lists the private repositories and this one and no other public
-  # repository. Qodana is the only workflow here that uses them.
+  # which every repository of the organisation can use. A fork pull request
+  # needs the maintainer's approval before any of its workflows runs.
   backend:
     runs-on: [self-hosted, Linux, X64]
 
